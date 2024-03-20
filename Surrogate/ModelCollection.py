@@ -1,4 +1,3 @@
-from Surrogate.RBF import RBF
 from Surrogate.KNN import KNN
 from Surrogate.SVR import SVR
 from Surrogate.RBFNN import RBFNN
