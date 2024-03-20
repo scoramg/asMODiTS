@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import mode
-from statistics import mean
+#from statistics import mean
 from Surrogate.ModelBase import ModelBase
 from RegressionMeasures.regression_measures import RegressionMeasures
 from Utils.parser import Parser
@@ -104,7 +104,7 @@ class KNN(ModelBase):
             exit(1)
         
         if self.options.task == 'regression': #Regression
-            labels = mean(knn_labels, axis=1)
+            labels = np.mean(knn_labels, axis=1)
         else: #Classification
             class_data = mode(knn_labels, axis=1)
             labels = class_data[0]
