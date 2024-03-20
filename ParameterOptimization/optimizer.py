@@ -97,8 +97,6 @@ class BayessianOptimizer:
         args = {
             "ff": self._functions.idconfiguration,
             "g": 0,
-            "cache": False,
-            "cache_data": None,
             "task": "regression"
         }
         return Namespace(**args)

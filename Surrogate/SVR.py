@@ -78,7 +78,6 @@ class SVR(RegressorMixin, ModelBase):
         self.tol=0.001
         self.epsilon=0.1
         self.shrinking=True
-        self.cache_size=200
         self.max_iter=-1
         self.gak = GAK(n_jobs=self.n_jobs, verbose=self.verbose)
         self.gamma = None
@@ -147,8 +146,7 @@ class SVR(RegressorMixin, ModelBase):
         self.svr_estimator_ = sklearn_svr(
             C=self.options.model[self.id_model].svr_c, kernel=self.estimator_kernel_, degree=self.degree,
             gamma=self.gamma, coef0=self.coef0, shrinking=self.shrinking,
-            tol=self.tol, cache_size=self.cache_size,
-            verbose=self.verbose, max_iter=self.max_iter
+            tol=self.tol, verbose=self.verbose, max_iter=self.max_iter
         )
         sample_weight = None
         self.svr_estimator_.fit(self.xtrain, self.ytrain, sample_weight=sample_weight)

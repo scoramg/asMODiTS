@@ -11,4 +11,3 @@ DISTANCES = {
     'SVR':['dtw', 'gak', 'euclidean'],
     'RBFNN':['dtw', 'gak', 'euclidean']
 }
-DIR_CACHE = os.path.realpath(os.getcwd())+"/Cache/cache.db"

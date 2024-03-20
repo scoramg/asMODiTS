@@ -36,11 +36,11 @@ class ModelBase(ABC):
     @property
     def distance_measure(self):
         if self.options.model[self.id_model].dist_metric == 'dtw':
-            return DTW(cache=self.options.cache, options=self.options.model[self.id_model], cache_data=self.options.cache_data)
+            return DTW(options=self.options.model[self.id_model])
         if self.options.model[self.id_model].dist_metric == 'gak':
-            return GAK(n_jobs=-1, cache=self.options.cache, cache_data=self.options.cache_data)
+            return GAK(n_jobs=-1)
         if self.options.model[self.id_model].dist_metric == 'tga':
-            return TGA(options=self.options.model[self.id_model], cache=self.options.cache, cache_data=self.options.cache_data)
+            return TGA(options=self.options.model[self.id_model])
     
     @property
     def dist_threshold(self):

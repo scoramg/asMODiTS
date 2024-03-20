@@ -208,8 +208,6 @@ class NSGA2:
         return generation
     
     def create_checkpoint(self, e, g, dirs):
-        if self.options.cache:
-            self.options.cache_data.save()
         delete_files_pattern(dirs["checkpoints"],"checkpoint_e*_g*")
         cp = dict(surrogate_models=self.surrogate_models.create_checkpoint(), 
                   population=self.population.get_individuals_cuts(), 

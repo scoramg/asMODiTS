@@ -10,11 +10,6 @@ from Datasets.dataset import Dataset
 from EvolutionaryMethods.nsga2 import NSGA2
 from EvolutionaryMethods.pareto_front import ParetoFront as af
 from Utils.utils import delete_files_pattern, find_file#, find_last_file
-#from pathlib import Path
-from Cache.cache import CacheFile
-
-# import cProfile, pstats, io
-# from pstats import SortKey 
 
 import multiprocessing as mp
 
@@ -138,9 +133,6 @@ class asMODiTS:
         if self.options.checkpoints:
             foldername["checkpoints"] = results_dir+__slash__+"checkpoints"+__slash__
             
-        if self.options.cache:
-            foldername["cache"] = results_dir+__slash__+"cache"+__slash__
-
         if self.options.profilers:
             foldername["profiler"] = results_dir+__slash__+"profiler"+__slash__
             for i in range(0,self.options.e):
@@ -175,20 +167,7 @@ class asMODiTS:
         ds = Dataset(iDS, '_TRAIN', False)
         dirs = self.create_file_structure(ds.name)
         self.AccumulatedFront.ds=ds
-        
-        if self.options.cache:
-            self.cache = CacheFile(dir=dirs["cache"])
-            self.options.__setattr__("cache_data",self.cache)
-        else:
-            self.options.__setattr__("cache_data",None)
-        
-        """ if self.options.cache:
-            #print("emodits.execute.A")
-            cache = CacheDB()
-            self.options.__setattr__("connection",cache.connection)
-        else:
-            self.options.__setattr__("connection",None) """
-        
+       
         if self.options.checkpoints:
             e_ini = self.restore(dirs["checkpoints"]) + 1
         else:

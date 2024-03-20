@@ -71,10 +71,6 @@ class asMODiTSParameters(Parser):
         self.add_argument("-no-profilers", help="Avoid the creation of checkpoints for restoring the program execution. ", dest='profilers', action='store_false')
         self.set_defaults(profilers=False)
         
-        self.add_argument("-cache", help="Use the distance cache for speed up the runtime.", action='store_true')
-        self.add_argument("-no-cache", help="Avoid the use the distance cache for speed up the runtime. ", dest='cache', action='store_false')
-        self.set_defaults(cache=False)
-        
         self.add_argument(
             "-model",
             choices=self._get_available_commands(),
