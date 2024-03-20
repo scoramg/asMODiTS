@@ -73,11 +73,9 @@ class asMODiTSOptimizer:
             "ids": [38],
             "iu": params["iu"], 
             "train_size_factor": 2,
-            "eval_method": "surrogate",
             "task": "regression",
             "evaluation_measure": "RMSE",
             "train_rep": "allnorm",
-            "exec_type": "cpu",
             "error_t": 0.1,
             "batch_update": params["batch_update"],
             "model":[model1_opt, model2_opt, model3_opt]

@@ -137,7 +137,7 @@ class ModelBase(ABC):
         self.is_fitted = True
     
     def update(self, params=None): 
-        updated , no_eval= eval("self._update_"+self.options.model[self.id_model].ue)(params[self.options.model[self.id_model].ue])
+        updated , no_eval= self._update_archive(params["archive"])
         if updated > 0:
             self.train()
         return updated, no_eval

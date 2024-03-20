@@ -77,7 +77,7 @@ class Population:
                 self.individuals[j].fitness_functions.values = surrs[j,:].tolist()
                 self.individuals[j].isEvaluatedSurrogate = True
             for i in range(0,surrogate_models.no_models):
-                eval("surrogate_models.models[i].insert_"+self.options.model[i].ue)(individuals=self.individuals)
+                surrogate_models.models[i].insert_archive(individuals=self.individuals)
             
         return no_eval
     

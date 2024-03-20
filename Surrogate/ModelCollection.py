@@ -62,8 +62,7 @@ class ModelCollection:
         for i in range(0,self.no_models):
             checkpoint["Model"+str(i)] = {}
             checkpoint["Model"+str(i)]["training_set"] = self.models[i].training_set.get_individuals_cuts()
-            if self.options.model[i].ue == "archive":
-                checkpoint["Model"+str(i)]["archive"] = self.models[i].archive.create_checkpoint()
+            checkpoint["Model"+str(i)]["archive"] = self.models[i].archive.create_checkpoint()
             checkpoint["Model"+str(i)]["gen_upd"] = self.models[i].gen_upd
             checkpoint["Model"+str(i)]["factor_act"] = self.models[i].factor_act
             checkpoint["Model"+str(i)]["is_trained"] = self.models[i].is_trained

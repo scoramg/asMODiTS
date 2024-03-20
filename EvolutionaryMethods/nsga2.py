@@ -252,7 +252,7 @@ class NSGA2:
             self.run_generation(g, e)
             predictions = self.population.prediction_power(surrogate_models=self.surrogate_models)
             inds = self._generate_random_individuals()
-            included, no_eval = self.surrogate_models.update(g=g,front=self.fronts[0].individuals.copy(),random=inds.copy(),archive=inds.copy(),individuals=self.population.individuals.copy())
+            included, no_eval = self.surrogate_models.update(g=g, archive=inds.copy(),individuals=self.population.individuals.copy())
             self.no_evaluations += no_eval
             if included > 0:
                 print("Model Updated")

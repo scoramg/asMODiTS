@@ -45,7 +45,6 @@ class Parameters(Parser):
         
         self.add_argument("--name", help="Name of the model. Default value = %(default)s", default=self.title)
         self.add_argument("--knn-k", type=int, help="Number of neighbors for the kNN algorithm and the number of clusters for RBF. Type of data: integer. Default value = %(default)s", default=1, required=True)
-        self.add_argument("--ue", type=str, help="Update strategy. 'front': Updating using first Pareto front, 'random': Updating using random schemes, 'archive': Updating using an archive. Type of data: integer. Default value = %(default)s",default='front')
         self.add_argument("--gu", type=int, help="The generations' number for evaluating the entire population in the original models (generation strategy). Type of data: integer. Required argument. Default value = %(default)s",default=5)
         self.add_argument("--train-rep", type=str, help="Representation type used for the surrogate model train set. 'all' = A Vector with all values, 'allnorm' = A normalized vector with all values, 'numcuts' = Vector with only number of cuts, 'stats' = Vector with stats values, 'cutdits' = Vector with cut distributions. Type of data: string. Default value = %(default)s",default="all")
         self.add_argument("--dist-metric", type=str, choices=KNN.distances_allowed, help="List of distance metric: {dists}. Type of data: string. Default value = %(default)s".format(dists=KNN.distances_allowed),default=KNN.distances_allowed[0])
@@ -71,7 +70,7 @@ class KNN(ModelBase):
         super().__init__(id_model=id_model, options=options)
 
     def get_name(self):
-        return str(self.options.model[self.id_model].knn_k)+"NN"+self.options.model[self.id_model].dist_metric.upper()+"("+self.options.model[self.id_model].ue.upper()[:2]+"_"+str(self.options.model[self.id_model].gu)+"_"+str(int(self.options.model[self.id_model].dtw_sakoechiba_w*100))+")"
+        return str(self.options.model[self.id_model].knn_k)+"NN"+self.options.model[self.id_model].dist_metric.upper()+"("+str(self.options.model[self.id_model].gu)+"_"+str(int(self.options.model[self.id_model].dtw_sakoechiba_w*100))+")"
         
     def train(self):        
         self.xtrain, classes = self.training_set.to_train_set(self.id_model)
