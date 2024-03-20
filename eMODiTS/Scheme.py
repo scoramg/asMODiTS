@@ -18,7 +18,6 @@ sys.path.append(os.path.abspath(os.path.join('.', 'src/Functions')))
 import Functions.confusion_matrix as cm
 import Functions.fitness_functions as ff
 from Utils.utils import normalize_matrix, to_paired_value, separate_data_target, minmax_normalize, minmax_normalize_number
-from classifier import Classifier
 from Datasets.dataset import Dataset
 from statistics import mean, pstdev
 
@@ -47,7 +46,6 @@ class Scheme:
         self.fitness_functions = ff.FitnessFunction(self.options.ff)
         self.confusion_matrix = cm.ConfusionMatrix(str_discrete=[], bd=self.ds)
         
-        self.classifier = Classifier(clases=self.ds.clases,clf_id=0)
         self.DecisionTreeGraph = None
         self.DecisionTreeGraphText = ""
         self.statistic_rates = None
