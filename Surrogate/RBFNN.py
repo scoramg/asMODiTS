@@ -1,4 +1,3 @@
-import argparse
 from sklearn.metrics import mean_squared_error
 import numpy as np
 
@@ -70,7 +69,7 @@ class Parameters(Parser):
 class RBFNN(ModelBase):
     """Implementation of a Radial Basis Function Network"""
     
-    distances_allowed = conf.DISTANCES["RBF"]
+    distances_allowed = conf.DISTANCES["RBFNN"]
     
     def __init__(self, id_model, options=None):
         super().__init__(id_model=id_model, options=options)

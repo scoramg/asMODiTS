@@ -75,7 +75,7 @@ class asMODiTSParameters(Parser):
             "-model",
             choices=self._get_available_commands(),
             action = "append",
-            help="List of surrogate models to use for each objective function. 'knn': KNNRegressor, 'rbf': RBF, 'svr': SVR, 'rbfnn': RBF Neural Network. Type of data: integer. Required argument.",
+            help="List of surrogate models to use for each objective function. 'knn': KNNRegressor, 'svr': SVR, 'rbfnn': RBF Neural Network. Type of data: integer. Required argument.",
             required=False
         )
     

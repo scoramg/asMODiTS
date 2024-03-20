@@ -1,4 +1,3 @@
-#import argparse
 import random, pickle, platform
 import itertools
 import numpy as np
@@ -9,12 +8,11 @@ from scipy.io import savemat
 from Datasets.dataset import Dataset
 from EvolutionaryMethods.nsga2 import NSGA2
 from EvolutionaryMethods.pareto_front import ParetoFront as af
-from Utils.utils import delete_files_pattern, find_file#, find_last_file
+from Utils.utils import delete_files_pattern, find_file
 
 import multiprocessing as mp
 
 from Surrogate.KNN import Parameters as KNNParams
-from Surrogate.RBF import Parameters as RBFParams
 from Surrogate.SVR import Parameters as SVRParams
 from Surrogate.RBFNN import Parameters as RBFNNParams
 from Utils.parser import asMODiTSParameters
@@ -30,15 +28,6 @@ from hyperopt import hp
 __slash__ = '/'
 if platform.system() == 'Windows':
     __slash__ = '\\'
-#from scipy.io import loadmat
-
-#Se usó pyts, tslearn
-
-""" def get_first_front(ds, options, population):
-    nsga = NSGA2(_ds=ds, _options=options)
-    nsga.set_population(population.copy())
-    nsga.FastNonDominatedSort()
-    return nsga.fronts[0] """
     
 class asMODiTSOptimizer:
     def __init__(self):
@@ -126,8 +115,6 @@ class asMODiTS:
         results_dir = os.path.dirname(os.path.realpath(__file__))+__slash__+"Results"+__slash__+export_filename+__slash__+"MODiTS"+__slash__+dataset_name
         foldername = {
             "main":results_dir+__slash__,
-            #"profiler":results_dir+"/profiler/",
-            #"checkpoints":results_dir+"/checkpoints/",
             "trainings":results_dir+__slash__+"trainings"+__slash__
         }
         if self.options.checkpoints:
@@ -174,7 +161,6 @@ class asMODiTS:
             e_ini = 0
         
         _in = False
-        #print("emodits.execute.e_ini",e_ini)
         for e in range(e_ini,self.options.e):
             _in = True
             start_time = time.time()
@@ -189,14 +175,9 @@ class asMODiTS:
             nsga2 = NSGA2(_ds=ds, _surrogate_models=self.surrogate_models, _options=self.options)
             nsga2.execute(e+1, dirs=dirs, population=initial_population)
             evals_by_exec += nsga2.no_evaluations
-            #for f in nsga2.fronts[0]:
-            #    self.AccumulatedFront.add_individual(f)
             self.AccumulatedFront.addIndividualsForFront(nsga2.fronts[0])
             self.no_training += self.surrogate_models.training_number
             self.no_evaluations += evals_by_exec
-            #exec_front = pop.Population(ds, options=self.options)
-            #exec_front.addIndividuals(nsga2.fronts[0])
-            #mat_exec = exec_front.export_matlab(isAccumulated=False)
             mat_exec = nsga2.fronts[0].export_matlab(isAccumulated=False)
             mat_exec["evaluations"] = evals_by_exec
             mat_exec["predictions"] = nsga2.surrogate_errors
@@ -220,9 +201,7 @@ class asMODiTS:
         if _in:
             for i,j in list(itertools.product(np.arange(0,len(self.prediction_keys[1])),np.arange(0,len(self.prediction_keys[2])))):
                 self.predictions_measures[self.prediction_keys[1][i]][self.prediction_keys[2][j]] = self.predictions_measures[self.prediction_keys[1][i]][self.prediction_keys[2][j]] / self.options.e
-            #first_front = self.AccumulatedFront.get_first_front()
             nsga2_accum = NSGA2(_ds=ds, _surrogate_models=self.surrogate_models, _options=self.options)
-            #print("emodits.execute.self.AccumulatedFront.size", self.AccumulatedFront.size)
             first_front = nsga2_accum.get_first_front(population=self.AccumulatedFront.points, is_already_sorted=False)
             mat = first_front.export_matlab()
             mat["time"] = self.time #Milisegundos
@@ -233,28 +212,17 @@ class asMODiTS:
             savemat(dirs["main"]+ds.name+"_MODiTS.mat", mat, long_field_names=True)
             trainings = self.surrogate_models.export_matlab()
             savemat(dirs["trainings"]+ds.name+"_MODiTS_trainings.mat", trainings, long_field_names=True)
-        #print("smodits.execute._in:",_in)
-        # pr.disable()
-        # sortby = SortKey.CUMULATIVE
-        # ExportProfileToFile = dirs["profiler"] + "ProfilerResults_"+self.surrogate_models.name+"_"+time.strftime("%Y-%m-%d-%H-%M-%S")+".txt"
-        
-        # with open(ExportProfileToFile, 'w') as stream:
-        #     stats = pstats.Stats(pr, stream=stream).sort_stats(sortby)
-        #     stats.print_stats()
     
 if __name__ == "__main__":
     
     commands = [
         KNNParams,
-        RBFParams,
         SVRParams,
         RBFNNParams
     ]
     parser = asMODiTSParameters(commands=commands)
     options=parser.parse_args()
     
-    #Falta comparar los argumentos para hacer que no se repita o empiece desde un valor si cambia un parametro que no esta en el nombre del archivo
-    #print("emodits.main.options:", options)
     ids = options.ids
     
     assert len(options.model) == FitnessFunction(idconfiguration=options.ff).no_functions, "The surrogate models' number ({}) is less than or greater than the objective functions' number({}).".format(len(options.model),FitnessFunction(idconfiguration=options.ff).no_functions)

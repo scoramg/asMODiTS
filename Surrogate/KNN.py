@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.stats import mode
-from scipy import mean
+from statistics import mean
 from Surrogate.ModelBase import ModelBase
 from RegressionMeasures.regression_measures import RegressionMeasures
 from Utils.parser import Parser

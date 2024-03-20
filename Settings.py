@@ -7,7 +7,6 @@ PERCENTAGE_SPLIT = 0.6
 LETTERS = ['','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
 DISTANCES = {
     'KNN':['dtw', 'gak', 'euclidean'],
-    'RBF':['dtw', 'gak', 'euclidean'],
     'SVR':['dtw', 'gak', 'euclidean'],
     'RBFNN':['dtw', 'gak', 'euclidean']
 }
