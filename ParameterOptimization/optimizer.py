@@ -3,7 +3,6 @@ from timeit import default_timer as timer
 import numpy as np
 import pandas as pd
 from hyperopt import STATUS_OK, hp, tpe, fmin, Trials
-#from hyperopt.pyll.stochastic import sample
 from argparse import Namespace
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -98,7 +97,6 @@ class BayessianOptimizer:
         args = {
             "ff": self._functions.idconfiguration,
             "g": 0,
-            "exec_type": "cpu",
             "cache": False,
             "cache_data": None,
             "task": "regression"
@@ -114,20 +112,12 @@ class BayessianOptimizer:
         
         if not self.options.groupedds:
             train, test = self.get_train_test_sets([iDS], gen_options)
-            #ds = Dataset(iDS, '_TRAIN', False)
-            #train = Population(_ds=ds, pop_size=self.options.train_size, options=gen_options)
-            #train.evaluate()
-            #test = Population(_ds=ds, pop_size=self.options.test_size, options=gen_options)
-            #test.evaluate()
         else:
             train, test = self.get_train_test_sets(self.ids, gen_options)
-        #print("fitness_functions.values:", train.individuals[0].fitness_functions.values)
         self.model = eval(options.name)(self.id_function, options=gen_options)
         self.model.fit(training_set=train)
         self.model.train()
         test_data, test_classes = test.to_train_set(id_model=self.id_function)
-        #print("optimizer.execute_model.test_classes:", test_classes)
-        #print("optimizer.execute_model.test_classes:", test_classes)
         y_pred = self.model.predict(test_data)
         self.regression_measures.setObserved(observed=np.array(test_classes[:,self.id_function]))
         self.regression_measures.setPredicted(predicted=np.array(y_pred))
@@ -138,21 +128,16 @@ class BayessianOptimizer:
         self.iteration += 1
         options = self._options(params=params,label='model')
         start = timer()
-        #Aquí va la ejecución de cada modelo
         if self.options.groupedds:
             self.execute_model(options=options)
         else:
             self.execute_model(iDS=params["ids"],options=options)
         run_time = timer() - start
-        # Extract the best score
         best_score = np.max(self.regression_measures.values[self.options.loss_function])
-        # Loss must be minimized
         loss = 1 - best_score
-        # Write to the csv file ('a' means append)
         of_connection = open(self.out_file, 'a')
         writer = csv.writer(of_connection)
         writer.writerow([loss, params, self.iteration, run_time])
-        # Dictionary with information for evaluation
         return {'loss': loss, 'params': params, 'iteration': self.iteration,
                 'train_time': run_time, 'status': STATUS_OK}
         
@@ -186,14 +171,11 @@ class BayessianOptimizer:
         trainset_ds = round(self.options.train_size/len(ids))
         testset_ds = round(self.options.test_size/len(ids))
 
-        #print("datasets:", ids)
-
         for idx in ids:
             ds = Dataset(idx, '_TRAIN', False)
             train_aux = Population(_ds=ds, pop_size=trainset_ds, options=options)
             train_aux.evaluate()
             train.join(train_aux)
-            #print("train.size:", train.size)
             test_aux = Population(_ds=ds, pop_size=testset_ds, options=options)
             test_aux.evaluate()
             test.join(test_aux)

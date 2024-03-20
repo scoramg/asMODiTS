@@ -135,29 +135,12 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
     (2, 6, 1)
     """
 
-    #n_clusters=3, max_iter=50, tol=1e-6, n_init=1,
-    #             metric="euclidean", max_iter_barycenter=100,
-    #             metric_params=None, n_jobs=None, dtw_inertia=False,
-    #             verbose=0, random_state=None, init='k-means++'
-    # options, metric_params=self.options.model[self.id_model]
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         if self.metric == "dtw":
-            self.dtw = DTW(exec_type=self.options.exec_type, options=self.metric_params)
+            self.dtw = DTW(options=self.metric_params)
         if self.metric == "euclidean":
             self.euclidean = Euclidean(metric='euclidean', p=2)
-        #self.n_clusters = n_clusters
-        #self.max_iter = max_iter
-        #self.tol = tol
-        #self.n_init = n_init
-        #self.metric = metric
-        #self.max_iter_barycenter = max_iter_barycenter
-        #self.metric_params = metric_params
-        #self.n_jobs = n_jobs
-        #self.dtw_inertia = dtw_inertia
-        #self.verbose = verbose
-        #self.random_state = random_state
-        #self.init = init
     
     def _k_init_metric(self, X, cdist_metric, random_state, n_local_trials=None):
         """Init n_clusters seeds according to k-means++ with a custom distance
@@ -357,7 +340,6 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
         return metric_params """
 
     def _fit_one_init(self, X, rs):
-        #metric_params = self._get_metric_params()
         n_ts, sz, d = X.shape
         if hasattr(self.init, '__array__'):
             self.cluster_centers_ = self.init.copy()
@@ -371,11 +353,7 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
             else:
                 if self.metric == "dtw":
                     def metric_fun(x, y):
-                        #return cdist_dtw(x, y, n_jobs=self.n_jobs, verbose=self.verbose, **metric_params)
                         return self.dtw.cdist(x, y, n_jobs=self.n_jobs, verbose=self.verbose)
-                #elif self.metric == "softdtw":
-                #    def metric_fun(x, y):
-                #        return cdist_soft_dtw(x, y, **metric_params)
                 else:
                     raise ValueError(
                         "Incorrect metric: %s (should be one of 'dtw', "
@@ -409,16 +387,12 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
         return self
 
     def _transform(self, X):
-        #metric_params = self._get_metric_params()
         if self.metric == "euclidean":
             return self.euclidean.cdist(X=X.reshape((X.shape[0], -1)),
                          cluster_centers=self.cluster_centers_.reshape((self.n_clusters, -1)))
         elif self.metric == "dtw":
             return self.dtw.cdist(X, self.cluster_centers_, n_jobs=self.n_jobs, verbose=self.verbose)
-            #return cdist_dtw(X, self.cluster_centers_, n_jobs=self.n_jobs,
-            #                 verbose=self.verbose, **metric_params)
-        #elif self.metric == "softdtw":
-         #   return cdist_soft_dtw(X, self.cluster_centers_, **metric_params)
+            
         else:
             raise ValueError("Incorrect metric: %s (should be one of 'dtw', "
                              "'softdtw', 'euclidean')" % self.metric)
@@ -431,9 +405,7 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
             _check_no_empty_cluster(self.labels_, self.n_clusters)
             if self.dtw_inertia and self.metric != "dtw":
                 inertia_dists = self.dtw.cdist(X, self.cluster_centers_, n_jobs=self.n_jobs, verbose=self.verbose)
-                #inertia_dists = cdist_dtw(X, self.cluster_centers_,
-                #                          n_jobs=self.n_jobs,
-                #                          verbose=self.verbose)
+                
             else:
                 inertia_dists = dists
             self.inertia_ = _compute_inertia(inertia_dists,
@@ -442,25 +414,12 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
         return matched_labels
 
     def _update_centroids(self, X):
-        #metric_params = self._get_metric_params()
         for k in range(self.n_clusters):
             if self.metric == "dtw":
-                #print("kmeans._update_centroids.cluster_centers_:", self.cluster_centers_)
                 self.cluster_centers_[k] = self.dtw.barycenter_averaging(
                     X=X[self.labels_ == k],
                     init_barycenter=self.cluster_centers_[k])
-                #self.cluster_centers_[k] = dtw_barycenter_averaging(
-                #    X=X[self.labels_ == k],
-                #    barycenter_size=None,
-                #    init_barycenter=self.cluster_centers_[k],
-                #    metric_params=metric_params,
-                #    verbose=False)
-            #elif self.metric == "softdtw":
-            #    self.cluster_centers_[k] = softdtw_barycenter(
-            #        X=X[self.labels_ == k],
-            #        max_iter=self.max_iter_barycenter,
-            #        init=self.cluster_centers_[k],
-            #        **metric_params)
+                
             else:
                 self.cluster_centers_[k] = self.euclidean.barycenter(
                     X=X[self.labels_ == k])
@@ -477,8 +436,7 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
             Ignored
         """
         
-        #X = check_array(X, allow_nd=True, force_all_finite='allow-nan')
-
+       
         if hasattr(self.init, '__array__'):
             X = check_dims(X, X_fit_dims=self.init.shape,
                            extend=True,
@@ -563,7 +521,6 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
         labels : array of shape=(n_ts, )
             Index of the cluster each sample belongs to.
         """
-        #X = check_array(X, allow_nd=True, force_all_finite='allow-nan')
         check_is_fitted(self, 'cluster_centers_')
         X = check_dims(X, X_fit_dims=self.cluster_centers_.shape,
                        extend=True,
@@ -586,7 +543,6 @@ class TimeSeriesKMeans(TransformerMixin, ClusterMixin,
         distances : array of shape=(n_ts, n_clusters)
             Distances to cluster centers
         """
-        #X = check_array(X, allow_nd=True, force_all_finite='allow-nan')
         check_is_fitted(self, 'cluster_centers_')
         X = check_dims(X, X_fit_dims=self.cluster_centers_.shape,
                        extend=True,

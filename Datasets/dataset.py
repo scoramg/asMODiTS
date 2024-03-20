@@ -161,29 +161,3 @@ class Dataset:
             data['class'] = row[2]
             database.append(data)
         return database, limites, dimensions
-    
-    '''.vscode/def convert2nominal(self):
-        df = pd.DataFrame(data = self.data)
-        col_names = list(df)
-        for col in col_names:
-            df[col] = df[col].astype('category',copy=False)
-        print(df.dtypes)
-        return df.to_numpy()'''
-
-#prueba = load_dataset_as_dict(90,'_TEST');
-#print(prueba[0]['histogram'])
-
-#prueba = Dataset(38, '_TRAIN', False)
-#print(prueba.dimensions)
-#prueba2_var, prueba2_tar = separate_data_target(prueba.data)
-#print(prueba2_tar, len(prueba2_tar))
-#print(prueba2_var, len(prueba2_var[0]))
-#print(len(prueba.data['_TRAIN']))
-#print(prueba.data[0]['histogram'][0:2], prueba.data[0]['class_name']) #filas
-#print(np.mean(prueba.data[0]['histogram'][0:2, 10:12])) #devuelve una numpy.ndarray con el conjunto de filas y columnas seleccionadas
-
-#print(prueba.limites)
-#print(prueba.dimensions)
-
-#matriz = np.array(([1,2,3],[4,5,6],[7,8,9]))
-#print(matriz[0:2, 1])

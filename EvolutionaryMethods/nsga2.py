@@ -2,37 +2,24 @@ import itertools, pickle, math, functools#, lzma, bz2, gzip
 import eMODiTS.Population as pop
 from Utils.utils import compare_by_rank_crowdistance, delete_files_pattern, find_file, find_last_file
 import numpy as np
-#from sklearn.metrics import mean_squared_error
-#import pandas as pd
 import random, time
-#import eMODiTS.Scheme as sch
 from RegressionMeasures.regression_measures import RegressionMeasures
 import cProfile, pstats
 from pstats import SortKey 
 from EvolutionaryMethods.pareto_front import ParetoFront
 
 class NSGA2:
-    #def __init__(self, ds, surrogate_models=None, options=None):
     def __init__(self,**kwargs):
         
         self.__dict__.update(kwargs)
-        #self.ds = ds
-        #self.options = options
-        #self.surrogate_models = surrogate_models
-        #print("nsga2.init.model[0].w:", self._surrogate_models.models[0].w)
         self.fronts = {}
         self.fronts[0] = ParetoFront(ds=self.ds, options=self.options)
-        #self.pop_size = self.options.ps
         self.population = pop.Population(_ds=self.ds, options=self.options)
         self.no_evaluations = 0
         self.surrogate_errors = {}
         self._gen_upd = 0
         self._iu = 0
         self._factor_act = 0
-    
-    """ @property
-    def size(self):
-        return self.options.ps """
         
     @property
     def size(self):
@@ -72,11 +59,9 @@ class NSGA2:
         del(self._ds)
         del(self._surrogate_models)
         del(self.population)
-        #gc.collect()
         
     def set_population(self, population):
         self.population = population.copy()
-        #self.pop_size = self.population.size
         
     def non_ranked(self):
         ranked = True
@@ -185,10 +170,7 @@ class NSGA2:
                 print(i,self.fronts[i].get(j).fitness_functions.values)
     
     def run_generation(self, g, e):
-        if self.options.eval_method == 'surrogate':
-            print("Model:", self.surrogate_models.name, " - Dataset:", self.ds.name," - Ejecución:", e," - Generación NSGA2:", g+1)
-        else:
-            print("Dataset:", self.ds.name," - Ejecución:", e," - Generación NSGA2:", g+1)
+        print("Model:", self.surrogate_models.name, " - Dataset:", self.ds.name," - Ejecución:", e," - Generación NSGA2:", g+1)
         self.FastNonDominatedSort()
         self.get_crowding_distance()
         parents = self.population.tournament_selection()
@@ -197,60 +179,9 @@ class NSGA2:
         
         self.no_evaluations += offsprings.evaluate(self.surrogate_models)
         
-        #if self.options.ue == 3:
-        #    self.surrogate_models.update_archives()
-        
-        if self.options.eval_method == 'surrogate': 
-            #measures = RegressionMeasures()
-            #print(self.iu)
-            inds = random.sample(range(0,offsprings.size),self._iu)
-            #print(inds)
-            for ind in inds:
-                #print("Before: offsprings.individuals[ind].fitness_functions.values: ", offsprings.individuals[ind].fitness_functions.values, " offsprings.individuals[ind].: ", offsprings.individuals[ind].surrogate_values)
-                self.no_evaluations += offsprings.individuals[ind].evaluate()
-                #print("After: offsprings.individuals[ind].fitness_functions.values: ", offsprings.individuals[ind].fitness_functions.values, " offsprings.individuals[ind].surrogate_values: ", offsprings.individuals[ind].surrogate_values)
-            #for m in range(0, len(self.models)):
-            #    measures.addObservedValue(sh.fitness_functions.values[m])
-            #    measures.addPredictedValue(f.fitness_functions.values[m])
-            
-                
-        """ if self.surrogate_models is not None:
-            if self.surrogate_models.options.surrogate_models >= 0:
-                if ((g+1) % self.gen_upd) == 0:
-                    front_evaluated, evaluations = self.surrogate_models.evaluate(front=self.fronts[0])
-                    self.no_evaluations += evaluations
-                    error = self.surrogate_models.prediction_error
-                    print("Evaluación de los modelos surrogados: ",error)
-                    if error < self.options.error_t:
-                        #self.no_evaluations += self.surrogate_models.UpdateAndTrain(self.fronts[0)
-                        self.surrogate_models.UpdateAndTrain(front_evaluated)
-                        diff = self.surrogate_models.instances.population.size - (self.size*2)
-                        if diff<0:
-                            for i in range(0,abs(diff)):
-                                individual = sch.Scheme(self.ds, cuts={}, options=self.options)
-                                self.no_evaluations += individual.evaluate()
-                                self.surrogate_models.instances.population.add_individual(individual)
-                            #print(self.surrogate_models.instances.population.size,self.size*2)
-                            
-                        #print('self.gen_upd: ', self.gen_upd)
-                        inc = round(self.factor_act*error,0)
-                        if inc > 0:
-                            self.gen_upd += inc
-                        else:
-                            self.gen_upd += 1
-                        #self.gen_upd += round(self.factor_act*error,0) 
-                        #if self.gen_upd <= 0:
-                        #    self.gen_upd = 1
-                    else:
-                        self.factor_act = self.factor_act * 2
-                    #Entrenamiento del modelo subrogado y evaluación del modelo                                        
-                    #error = self.surrogate_models.prediction_error
-                    #if error == 0:
-                    #    error += 0.01 #Aggregate a small variation for avoiding the zero value in prediction value
-                    #print('self.gen_upd: ', self.gen_upd, ' error: ', error)
-                    #self.gen_upd += math.ceil(self.gen_upd*error) 
-                    #if self.gen_upd <= 0:
-                    #    self.gen_upd = 1 """
+        inds = random.sample(range(0,offsprings.size),self._iu)
+        for ind in inds:
+            self.no_evaluations += offsprings.individuals[ind].evaluate()
         
         self.population.join(offsprings)
         self.FastNonDominatedSort()
@@ -261,12 +192,8 @@ class NSGA2:
         del(parents)
     
     def restore(self, e, dir):
-        #generation, file = find_last_file(dir, substr="checkpoint_e"+str(e)+"_g")
-        #generation, file = find_file(dir, include="_g")
         generation, file = find_file(dir, include="checkpoint_e{ex}_g".format(ex=e))
         if generation > 0:
-            #checkpoint = pickle.loads(brotli.decompress(open(dir+"/"+file, "rb" ).read()))
-            #print("nsga2.restore.file:", dir+"/"+file)
             try:
                 checkpoint = pickle.load(open(dir+"/"+file, "rb" ))
                 self.surrogate_models.restore(self.ds, checkpoint["surrogate_models"])
@@ -281,7 +208,6 @@ class NSGA2:
         return generation
     
     def create_checkpoint(self, e, g, dirs):
-        #delete_files_pattern(dirs["checkpoints"],"checkpoint_e"+str(e)+"_g*")
         if self.options.cache:
             self.options.cache_data.save()
         delete_files_pattern(dirs["checkpoints"],"checkpoint_e*_g*")
@@ -294,15 +220,9 @@ class NSGA2:
         pickle.dump(cp, open(dirs["checkpoints"]+"checkpoint_e"+str(e)+"_g"+str(g).zfill(no_digits)+".pkl", "wb" ), protocol=pickle.HIGHEST_PROTOCOL)
             
     def _generate_random_individuals(self):
-        #params = {}
         aux = pop.Population(_ds=self.ds,pop_size=self.options.batch_update, options=self.options)
         self.no_evaluations += aux.evaluate(surrogate_models=self.surrogate_models)
         return aux.individuals.copy()
-        #params["front"] = self.fronts[0].copy()
-        #params["random"] = aux.individuals.copy()
-        #params["archive"] = aux.individuals.copy() #Le paso un conjunto de individuos generados aleatoriamente por si el archivo esta vacío
-        #params["individuals"] = self.population.individuals.copy()
-        #return params
     
     def execute(self, e, dirs, population = None):
         if population:
@@ -311,8 +231,6 @@ class NSGA2:
             self.population.create(self.options.ps)
             self.no_evaluations += self.population.evaluate()
         
-        #self.gen_upd = math.floor(self.options.g/self.options.gu)
-        #self.factor_act = math.floor(self.options.g/self.options.gu)
         self._iu = math.floor(self.options.iu * self.options.ps)
         
         self.surrogate_errors['Execution'] = {}
@@ -320,7 +238,6 @@ class NSGA2:
             self.surrogate_errors['Execution']['Model'+str(i)] = RegressionMeasures.init_measures_values()
         
         if self.options.checkpoints:
-            #g_ini = self.restore(e=e, dir=dirs["checkpoints_e"+str(e)])
             g_ini = self.restore(e=e, dir=dirs["checkpoints"]) + 1
         else:
             g_ini = 0
@@ -328,30 +245,19 @@ class NSGA2:
         models = list(self.surrogate_errors['Execution'].keys())
         measures = list(list(self.surrogate_errors['Execution'].values())[0].keys())
         ids = list(itertools.product(np.arange(0,len(models)),np.arange(0,len(measures))))
-        #print("nsga2.execute.g_ini", g_ini)
         for g in range(g_ini,self.options.g):
             if self.options.profilers:
                 pr = cProfile.Profile()
-                pr.enable() #Falta meterlo en un checkpoint
+                pr.enable() 
             self.run_generation(g, e)
             predictions = self.population.prediction_power(surrogate_models=self.surrogate_models)
-            if self.options.eval_method == "surrogate":
-                inds = self._generate_random_individuals()
-                #updated = self.surrogate_models.update(g=g,predictions=predictions,params=params)
-                included, no_eval = self.surrogate_models.update(g=g,front=self.fronts[0].individuals.copy(),random=inds.copy(),archive=inds.copy(),individuals=self.population.individuals.copy())
-                #if updated:
-                self.no_evaluations += no_eval
-                if included > 0:
-                    print("Model Updated")
-                    self.no_evaluations += self.population.evaluate(self.surrogate_models)
-                    self.no_evaluations += self.population.evaluate()
-                #if ((g+1) % self.gen_upd) == 0: #Each generation evaluate the model and evaluate the entire population
-                #    params = self._update_surrogate_config(data=self.fronts[0])                    
-                #    updated = self.surrogate_models.update(g=g,predictions=predictions,params=params)
-                #    if updated:
-                #        print("In")
-                #        self.no_evaluations += self.population.evaluate(self.surrogate_models)
-                #        self.no_evaluations += self.population.evaluate()                        
+            inds = self._generate_random_individuals()
+            included, no_eval = self.surrogate_models.update(g=g,front=self.fronts[0].individuals.copy(),random=inds.copy(),archive=inds.copy(),individuals=self.population.individuals.copy())
+            self.no_evaluations += no_eval
+            if included > 0:
+                print("Model Updated")
+                self.no_evaluations += self.population.evaluate(self.surrogate_models)
+                self.no_evaluations += self.population.evaluate()
                     
             self.surrogate_errors['Generation'+str(g)] = predictions.copy()
             

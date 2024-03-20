@@ -10,8 +10,7 @@ class TGA:
         self.__dict__.update(kwargs)
         self.dataset1 = None
         self.dataset2 = None
-        #self.options = options
-    
+        
     @property
     def sigma(self):
         random_state = None
@@ -35,8 +34,6 @@ class TGA:
     
     @property
     def triangular(self):
-        #lenghts = [len(row) for row in self.dataset1]
-        #return int(0.5 * np.median(lenghts))
         return self.options.dtw_sakoechiba_w
     
     def distance(self, dataset1, dataset2=None):
@@ -45,15 +42,11 @@ class TGA:
             self.dataset2 = np.copy(dataset1)
         else:
             self.dataset2 = np.copy(dataset2)
-        #print(self.dataset1)
-        #print(self.dataset2)
         n1 = self.dataset1.shape[0]
         n2 = self.dataset2.shape[0]
         dist = np.empty((n1, n2), dtype=np.float64)
         sigma = self.sigma
-        #print(sigma)
         triangular = self.triangular
-        #print(triangular)
         
         for i,j in list(itertools.product(np.arange(0,n1),np.arange(0,n2))):
             s1 = np.array(self.dataset1[i])
@@ -62,9 +55,4 @@ class TGA:
             s2 = np.expand_dims(s2, axis=1)
             dist[i][j] = tga_dissimilarity(s1, s2, sigma=sigma, triangular=triangular)
         return dist
-        #print(self.dataset1)
-        #print(self.dataset1.tolist(), type(self.dataset1))
-        #s1 = np.array(time_series_to_lists(self.dataset1),ndmin=2).astype('float')
-        #print(s1)
-        #s2 = np.array(time_series_to_lists(self.dataset2),ndmin=2)
-        #return tga_dissimilarity(s1, s2, sigma=sigma, triangular=triangular)
+    

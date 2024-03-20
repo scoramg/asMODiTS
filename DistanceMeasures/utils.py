@@ -45,9 +45,7 @@ def cdist_generic(dist_fun, dataset1, dataset2, n_jobs, verbose,
     -------
     cdist : numpy.ndarray
         Cross-similarity matrix
-    """  # noqa: E501
-    #dataset1 = to_time_series_dataset(dataset1, dtype=dtype)
-
+    """  
     if dataset2 is None:
         # Inspired from code by @GillesVandewiele:
         # https://github.com/rtavenar/tslearn/pull/128#discussion_r314978479
@@ -70,7 +68,6 @@ def cdist_generic(dist_fun, dataset1, dataset2, n_jobs, verbose,
         matrix[indices] = matrix.T[indices]
         return matrix
     else:
-        #dataset2 = to_time_series_dataset(dataset2, dtype=dtype)
         matrix = Parallel(n_jobs=n_jobs, prefer="threads", verbose=verbose)(
             delayed(dist_fun)(
                 dataset1[i], dataset2[j],

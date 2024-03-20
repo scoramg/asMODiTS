@@ -3,7 +3,6 @@ from Surrogate.KNN import KNN
 from Surrogate.SVR import SVR
 from Surrogate.RBFNN import RBFNN
 from eMODiTS.Population import Population
-import numpy
 
 class ModelCollection:
     def __init__(self, options=None):
@@ -13,7 +12,6 @@ class ModelCollection:
         
     @property
     def is_same_model(self):
-        #return all(i.class_name == self.models[0].class_name for i in self.models)
         return all(i == self.options.model[0] for i in self.options.model)
         
     @property
@@ -36,9 +34,7 @@ class ModelCollection:
             else:
                 self.name = model.get_name().upper()
                 
-    #def update(self, g, predictions, params=None): 
     def update(self, **kwargs):
-        #updated = False
         included = 0
         no_eval = 0
         g = kwargs['g']
@@ -46,34 +42,16 @@ class ModelCollection:
             if ((g+1) % self.models[i].gen_upd) == 0:
                 included, no_eval = self.models[i].update(kwargs)
                 inc = round(self.models[i].factor_act*included,0)
-                #print("self.models[i].factor_act:",self.models[i].factor_act,"included:", included, "inc:",inc)
                 if inc > 0:
                     self.models[i].gen_upd += inc
                 else:
                     self.models[i].gen_upd += 1
-                """ error = predictions["Model"+str(i)][self.options.evaluation_measure]
-                print("Model"+str(i), self.options.evaluation_measure, "value:", error)
-                if error < self.options.error_t:
-                    upd = self.models[i].update(params=params)
-                    updated = updated or upd
-                    inc = round(self.models[i].factor_act*error,0)
-                    if inc > 0:
-                        self.models[i].gen_upd += inc
-                    else:
-                        self.models[i].gen_upd += 1
-                else:
-                    self.models[i].factor_act = self.models[i].factor_act * 2 """
-            
-        #return updated, no_eval
         return included, no_eval
             
     def train(self, initial_training_set):
-        #for i in range(0,len(self.models)):
         for i in range(0,self.no_models):
             self.models[i].fit(initial_training_set.copy())
             self.models[i].train()
-            #print("ModelCollection.models[i].w:",self.models[i].w)
-            #print("ModelCollection.models[i].b:",self.models[i].b)
             
     def restore(self, ds, checkpoint):
         for i in range(0,self.no_models):

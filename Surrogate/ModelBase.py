@@ -5,7 +5,6 @@ from DistanceMeasures.dtw import DTW
 from DistanceMeasures.gak import GAK
 from DistanceMeasures.tga import TGA
 from Surrogate.Archive import Archive
-from eMODiTS.Scheme import Scheme
 from random import sample
 from eMODiTS.Population import Population
 
@@ -37,7 +36,7 @@ class ModelBase(ABC):
     @property
     def distance_measure(self):
         if self.options.model[self.id_model].dist_metric == 'dtw':
-            return DTW(exec_type=self.options.exec_type, cache=self.options.cache, options=self.options.model[self.id_model], cache_data=self.options.cache_data)
+            return DTW(cache=self.options.cache, options=self.options.model[self.id_model], cache_data=self.options.cache_data)
         if self.options.model[self.id_model].dist_metric == 'gak':
             return GAK(n_jobs=-1, cache=self.options.cache, cache_data=self.options.cache_data)
         if self.options.model[self.id_model].dist_metric == 'tga':
@@ -89,43 +88,15 @@ class ModelBase(ABC):
     @abc.abstractmethod
     def copy(self):
         raise NotImplementedError("Subclase debe implementar el método abstracto")
-    
-    def _update_front(self, *args):
-        #updated = False
-        updated = 0
-        evaluations = 0
-        front = args[0]
-        indexes = sample(range(0,len(front)), self.options.batch_update)
-        for i in indexes:
-            ind = front[i]
-            #print(ind.isEvaluatedOriginal, ind.isEvaluatedSurrogate)
-            #measures, no_eval = ind.prediction_measures(id_model=self.id_model)
-            #if measures[self.options.evaluation_measure] < self.options.error_t:
-            evaluations += ind.evaluate()
-            error = ind.prediction_measures(id_model=self.id_model)
-            #print("_update_front","model",self.id_model,error, ind.fitness_functions.values[self.id_model], ind.surrogate_values[self.id_model])
-            if error > self.options.error_t:
-                #print("Entro")
-                self.training_set.add_individual(ind)
-                updated += 1
-            #updated = True
-        #return updated, no_eval
-        #print("_update_front","updated:", updated)
-        return float(updated/self.options.batch_update), evaluations
-                
+            
     def _update_archive(self, *args):
-        #print("Entro a use_archive")
-        #updated = False
         updated = 0
         ratio_updated = 0
         evaluations = 0
-        #print(self.archive.is_empty)
         if self.archive.is_empty:
             ratio_updated, no_eval = self._update_random(args[0])
             evaluations += no_eval
         else:
-            #Individual-based strategy
-            #indexes = sample(range(0,self.archive.size), self.options.batch_update)
             data = []
             if self.archive.size < self.options.batch_update:
                 data = self.archive.data.copy()
@@ -140,37 +111,25 @@ class ModelBase(ABC):
             for i in range(0,len(data)):
                 ind = data[i]
                 evaluations += ind.evaluate()
-                #measures, no_eval = ind.prediction_measures()
-                #if measures[self.options.evaluation_measure] < self.options.error_t:}
                 error = ind.prediction_measures(id_model=self.id_model)
                 print("ModelUpdate.Error:", error, "Error threshold:", self.options.error_t)
                 if error > self.options.error_t:
                     self.training_set.add_individual(ind)
-                    #self.archive.set_data(np.delete(self.archive.data, i)) # Se elimina del archivo
                     updated += 1
             ratio_updated = float(updated/self.options.batch_update)
-                #updated = True
-            #print("Model"+str(self.id_model),updated)
         return ratio_updated, evaluations
             
     def _update_random(self, *args):
-        #print("Entro a use_random")
-        #updated = False
         updated = 0
         evaluations = 0
         data = args[0]
         for i in range(0,self.options.batch_update):
-            #ind = Scheme(self.training_set.ds, cuts={}, options=self.options)
             ind = data[i]
             evaluations += ind.evaluate()
             error = ind.prediction_measures(id_model=self.id_model)
-            #print("model",self.id_model,error, ind.fitness_functions.values[self.id_model], ind.surrogate_values[self.id_model])
-            #if measures[self.options.evaluation_measure] < self.options.error_t:
             if error > self.options.error_t:
                 self.training_set.add_individual(ind)
                 updated += 1
-            #updated = True
-        #print("Model"+str(self.id_model),updated)
         return float(updated/self.options.batch_update), evaluations
     
     def fit(self, training_set):
@@ -184,13 +143,10 @@ class ModelBase(ABC):
         return updated, no_eval
 
     def insert_archive(self, **kwargs):
-        #print("ModelBase.insert_archive")
         idxs = self.higher_distances_indexes
-        #print("ModelBase.insert_archive.idxs:",idxs)
         individuals = np.array(kwargs['individuals'])
         for i in range(len(idxs)):
-            self.archive.add(individuals[idxs[i].astype(int)]) #train indexes are same that individuals
-        #print("¡¡ Archivo actualizado !!")
+            self.archive.add(individuals[idxs[i].astype(int)])
     
     def restore(self, ds, checkpoint):
         training_set = Population(_ds=ds, options=self.options)

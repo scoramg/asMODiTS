@@ -36,10 +36,10 @@ class Parser(argparse.ArgumentParser):
             
         return formatter.format_help()
 
-class eMODiTSParameters(Parser):
+class asMODiTSParameters(Parser):
             
     def __init__(self, commands: list):
-        super().__init__(description='enhanced Multiobjective Symbolic Discretization for Time Series', prefix='USAGE: ', title='eMODiTS')
+        super().__init__(description='Archive-based and surrogate-assisted multi-objective approach for symbolic discretization of time series', prefix='USAGE: ', title='asMODiTS')
         self.available_commands = commands
         self.global_arguments = ['--version', '--help']
         self.subcommands = ["export"]
@@ -59,7 +59,6 @@ class eMODiTSParameters(Parser):
         self.add_argument("-ids", type=int, nargs='+', help="IDs of the datasets, format: id1 id2 ... idn. Type of data: list of integer separated by a space. Required argument.", required=False)
         self.add_argument("-iu", type=float, help="Individuals' percentage to evaluate in original functions (individual-based strategy). Type of data: float. Default value = %(default)s", default=0.1)
         self.add_argument("-train-size-factor", type=int, help="Factor to calculate the size of the training set from the population size. Type of data: int. Default value = %(default)s", default=2)
-        self.add_argument("-eval-method", type=str, help="Method used for evaluate new individuals: 'classic', 'surrogate'. Type of data: string. Default value = %(default)s", default='classic')
         self.add_argument("-task", type=str, help="Data mining task for the models. 'regression': Regression task, 'classification': Classification task. Type of data: string. Default value = %(default)s", default='regression')
         self.add_argument("-evaluation-measure", type=str, help="Metric used to evaluate the surrogate model. 'MSE' (Mean Square Error), 'R' (R Coefficient), 'R2' (R Squared), 'RMSE' (Root Mean Square Error), 'MD' (Modified Index of acceptance), 'MAPE' (Mean Absolute Percentage Error). Type of data: string. Default value = %(default)s", default='MD')
         self.add_argument("-train-rep", type=str, help="Representation type used for the surrogate model train set. 'all' = A Vector with all values, 'allnorm' = A normalized vector with all values, 'numcuts' = Vector with only number of cuts, 'stats' = Vector with stats values, 'cutdits' = Vector with cut distributions. Type of data: string. Default value = %(default)s",default="all")

@@ -5,9 +5,7 @@ try:
 except ImportError:  # Old sklearn versions
     from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_is_fitted
 import numpy as np
-from sklearn.metrics import mean_squared_error
 from DistanceMeasures.utils import cdist_generic
 from Utils.timeseries import to_time_series_dataset, to_time_series, check_equal_size
 from scipy.spatial.distance import cdist, pdist
@@ -24,7 +22,6 @@ def njit_gak(s1, s2, gram):
 
     for i in range(l1):
         for j in range(l2):
-    #for i,j in list(itertools.product(np.arange(0,l1),np.arange(0,l2))):
             cum_sum[i + 1, j + 1] = (
                 cum_sum[i, j + 1] + cum_sum[i + 1, j] + cum_sum[i, j]
             ) * gram[i, j]
@@ -34,10 +31,7 @@ def njit_gak(s1, s2, gram):
 class GAK:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
-        #self.n_jobs=n_jobs
-        #self.verbose=verbose
         
-
     def _gak_gram(self, s1, s2, sigma):
         gram = -cdist(s1, s2, "sqeuclidean") / (2 * sigma**2)
         gram -= np.log(2 - np.exp(gram))
@@ -115,23 +109,22 @@ class GAK:
             sigma=sigma,
             compute_diagonal=True,
         )
-        #print('Bef: ', np.min(unnormalized_matrix),np.max(unnormalized_matrix), np.mean(unnormalized_matrix))
-        #dataset1 = to_time_series_dataset(dataset1)
+        
         if dataset2 is None:
             diagonal = np.diag(np.sqrt(1.0 / np.diag(unnormalized_matrix)))
             diagonal_left = diagonal_right = diagonal
         else:
-            #dataset2 = to_time_series_dataset(dataset2)
+        
             diagonal_left = Parallel(n_jobs=self.n_jobs, prefer="threads", verbose=self.verbose)(
                 delayed(self.unnormalized_gak2)(dataset1[i], dataset1[i], sigma=sigma)
                 for i in range(len(dataset1))
             )
-            #diagonal_left = [self.unnormalized_gak2(dataset1[i], dataset1[i], sigma=sigma) for i in range(len(dataset1))]
+        
             diagonal_right = Parallel(n_jobs=self.n_jobs, prefer="threads", verbose=self.verbose)(
                 delayed(self.unnormalized_gak2)(dataset2[j], dataset2[j], sigma=sigma)
                 for j in range(len(dataset2))
             )
-            #diagonal_right = [self.unnormalized_gak2(dataset2[j], dataset2[j], sigma=sigma) for j in range(len(dataset2))]
+        
             diagonal_left = np.diag(1.0 / np.sqrt(diagonal_left))
             diagonal_right = np.diag(1.0 / np.sqrt(diagonal_right))
         return (diagonal_left.dot(unnormalized_matrix)).dot(diagonal_right)
@@ -187,7 +180,7 @@ class GAK:
         References
         ----------
         .. [1] M. Cuturi, "Fast global alignment kernels," ICML 2011.
-        """  # noqa: E501
+        """  
         unnormalized_matrix = cdist_generic(
             dist_fun=self.unnormalized_gak,
             dataset1=dataset1,
@@ -197,13 +190,12 @@ class GAK:
             sigma=sigma,
             compute_diagonal=True,
         )
-        #print('Bef: ', np.min(unnormalized_matrix),np.max(unnormalized_matrix), np.mean(unnormalized_matrix))
-        #dataset1 = to_time_series_dataset(dataset1)
+        
         if dataset2 is None:
             diagonal = np.diag(np.sqrt(1.0 / np.diag(unnormalized_matrix)))
             diagonal_left = diagonal_right = diagonal
         else:
-            #dataset2 = to_time_series_dataset(dataset2)
+        
             diagonal_left = Parallel(n_jobs=self.n_jobs, prefer="threads", verbose=self.verbose)(
                 delayed(self.unnormalized_gak)(dataset1[i], dataset1[i], sigma=sigma)
                 for i in range(len(dataset1))

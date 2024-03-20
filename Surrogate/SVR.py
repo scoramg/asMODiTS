@@ -1,20 +1,9 @@
-#https://tslearn.readthedocs.io/en/stable/gen_modules/svm/tslearn.svm.TimeSeriesSVR.html#tslearn.svm.TimeSeriesSVR
-#from tslearn.svm import TimeSeriesSVR
-#from tslearn.utils import to_time_series_dataset
 import argparse
 import warnings
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.base import RegressorMixin
 from sklearn.svm import SVR as sklearn_svr
-#from scipy.spatial.distance import cdist, pdist
-#from numba import njit
-#from joblib import Parallel, delayed
-#try:
-#    from sklearn.utils.estimator_checks import _NotAnArray as NotAnArray
-#except ImportError:  # Old sklearn versions
-#    from sklearn.utils.estimator_checks import NotAnArray
-#from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 from Surrogate.ModelBase import ModelBase
 from DistanceMeasures.gak import GAK, VARIABLE_LENGTH_METRICS
@@ -25,7 +14,6 @@ import Settings as conf
 from argparse import Namespace
 from hyperopt import hp
 
-#VARIABLE_LENGTH_METRICS = ["ctw", "dtw", "gak", "sax", "softdtw", "lcss"]
 class Optimizer:
     def __init__(self):
         pass
@@ -68,7 +56,6 @@ class Parameters(Parser):
         self.add_argument("--gu", type=int, help="The generations' number for evaluating the entire population in the original models (generation strategy). Type of data: integer. Required argument. Default value = %(default)s",default=5)
         self.add_argument("--train-rep", type=str, help="Representation type used for the surrogate model train set. 'all' = A Vector with all values, 'allnorm' = A normalized vector with all values, 'numcuts' = Vector with only number of cuts, 'stats' = Vector with stats values, 'cutdits' = Vector with cut distributions. Type of data: string. Default value = %(default)s",default="all")
         self.add_argument("--dist-metric", type=str, choices=SVR.distances_allowed,help="List of distance metric: {dists}. Type of data: string. Default value = %(default)s".format(dists=SVR.distances_allowed),default=SVR.distances_allowed[0])
-        #self.add_argument("--dtw-dist", type=str, choices=['square', 'absolute','precomputed'], help="Distance used by DTW for chech similarity among subsequences: 'square' (default), 'absolute', 'precomputed' or callable. Type of data: string. Default value = %(default)s",default='square')
         self.add_argument("--dtw-sakoechiba-w", type=float, help="Window size parameter for sakoechiba dtw constraint. Type of data: double. Default value = %(default)s", default=0.1)        
         self.add_argument("--svr-c", type=int, help="Penalty parameter C of the error term. Type of data: int. Default value = %(default)s", default=1)
         self.add_argument("--svr-gamma", type=float, help="Kernel coefficient for 'gak', 'rbf', 'poly' and 'sigmoid'. Type of data: float. Default value = %(default)s (in sklearn.SVR it is equal to 'auto')", default=0)
@@ -96,8 +83,6 @@ class SVR(RegressorMixin, ModelBase):
         self.max_iter=-1
         self.gak = GAK(n_jobs=self.n_jobs, verbose=self.verbose)
         self.gamma = None
-        #self.dist_threshold = self.options.dist_t
-        #self._classifier = TimeSeriesSVR(C=self.options.svr_c,kernel=self.options.svr_kernel, gamma="auto")
         
     def preprocess_sklearn(self, X, y=None, fit_time=False):
         
@@ -152,16 +137,8 @@ class SVR(RegressorMixin, ModelBase):
     def get_name(self):
         return self.class_name+self.options.model[self.id_model].dist_metric.upper()+"("+self.options.model[self.id_model].ue.upper()[:2]+"_"+str(self.options.model[self.id_model].gu)+"_"+str(int(self.options.model[self.id_model].dtw_sakoechiba_w*100))+"_"+str(self.options.model[self.id_model].svr_c)+"_"+str(self.options.model[self.id_model].svr_gamma)+")"
     
-    """ def getClassifier(self):
-        return self._classifier
-        
-    def setClassifier(self, classifier):
-        self._classifier =classifier """
     
     def train(self):
-        #self.x = to_time_series_dataset(X_train.reshape((-1, 1)), dtype=float)
-        #self.y = Y_train.reshape((-1, 1))
-        #self._classifier.fit(self.x, self.y)
         xtrain, classes = self.training_set.to_train_set(self.id_model)
         ytrain = classes[:,self.id_model]
         self.training_number += 1
@@ -176,22 +153,12 @@ class SVR(RegressorMixin, ModelBase):
         )
         sample_weight = None
         self.svr_estimator_.fit(self.xtrain, self.ytrain, sample_weight=sample_weight)
-        
-    # def predict_row(self, X_test):
-    #     y_pred = self._classifier.predict(to_time_series_dataset(X_test))
-    #     return y_pred
     
     def predict(self, x):
-        #y_pred = []
-        #for i in range(X.shape[0]):
-        #    y_pred.append(self.predict_row(np.array(X[i])))
-        #return np.array(y_pred)
-        #return self._classifier.predict(to_time_series_dataset(X_test))
         
         self.normalized_matrix_distance, self.matrix_distances = self.preprocess_sklearn(x, fit_time=False)
         self.matrix_distances = -self.matrix_distances
             
-        #print('Aft: ', np.min(self.matrix_distances),np.max(self.matrix_distances), np.mean(self.matrix_distances))
         return self.svr_estimator_.predict(self.normalized_matrix_distance)
     
     def classify(self, X_test, y_test):

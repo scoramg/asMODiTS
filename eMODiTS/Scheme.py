@@ -1,17 +1,13 @@
 import itertools
-import os, random, sys#, math
-import collections#, gc
+import os, random, sys
+import collections
 import numpy as np
 import pandas as pd
 import scipy.io
 import pandas as pd
-#from sklearn.model_selection import cross_val_score
 from sklearn import tree
-#from sklearn import metrics
 import graphviz
 import dot2tex
-#from DistanceMeasures.dtw import DTW
-#from DistanceMeasures.gak import GAK
 from RegressionMeasures.regression_measures import RegressionMeasures
 
 sys.path.append(os.path.abspath(os.path.join('.', 'src')))
@@ -26,8 +22,6 @@ from classifier import Classifier
 from Datasets.dataset import Dataset
 from statistics import mean, pstdev
 
-#from memory_profiler import profile
-
 def transformation(number, intervals, j, clase):
     if j>0:
         idx_list = [i+1 for i,interval in enumerate(intervals) if interval[0] <= number < interval[1]]
@@ -39,17 +33,14 @@ def transformation(number, intervals, j, clase):
 class Scheme:
         
     def __init__(self, **kwargs):
-        #self.cuts = cuts.copy()
         self.__dict__.update(kwargs)
         self.error_rate = -1.0
-        #self.options = options
         
         self.rank = -1
         self.crowding_distance = 0
         self.domination_count = 0
         self.dominated_set = set()
         
-        #self.ds = ds
         self.ds_discrete_ints = []
         self.ds_discrete_strings = []
         self.ds_discrete_reconstructed = []
@@ -84,7 +75,6 @@ class Scheme:
         self.error_rate = -1.0
         self.rank = -1
         self.crowding_distance = 0
-        #self.front = -1
         self.domination_count = 0
         self.dominated_set = set()
         self.ds_discrete_ints = []
@@ -107,22 +97,9 @@ class Scheme:
         
     def random_load(self):
         num_cuts = random.randint(conf.MIN_NUMBER_OF_WORD_CUTS, int(conf.MAX_NUMBER_OF_WORD_CUTS*self.ds.dimensions[1]))
-        #word_cuts = set()
         wordcuts = {random.randint(1, self.ds.dimensions[1]-1) for i in range(num_cuts)}
-        #for _ in range(0, num_cuts):
-        #    word_cuts.add(random.randint(1, self.ds.dimensions[1]-1))
         word_cuts = to_paired_value(sorted(list(wordcuts.union({1,self.ds.dimensions[1]-1}))))
-        
         self.cuts = {str(word_cuts[i]): self.create_alphs_cuts() for i in range(0,len(word_cuts))}
-        
-        """ for my_key in word_cuts:
-            num_alph = random.randint(conf.MIN_NUMBER_OF_ALPHABET_CUTS, conf.MAX_NUMBER_OF_ALPHABET_CUTS-1)
-            #alphs = set()
-            #for _ in range(0, num_alph):
-            #    alphs.add(random.uniform(self.ds.limites[0], self.ds.limites[1]))
-            alphs = {random.uniform(self.ds.limites[0], self.ds.limites[1]) for i in range(num_alph)}
-            alphs_cuts = to_paired_value(sorted(list(alphs.union({self.ds.limites[0], self.ds.limites[1]}))))
-            self.cuts[str(my_key)] = alphs_cuts """
             
     def load_from_matlab(self, filename):
         sch = scipy.io.loadmat(filename)
@@ -163,7 +140,7 @@ class Scheme:
     
     def cutdiffs(self):
         diffs = []
-        for wordcuts, alph_cuts in self.cuts.items():
+        for wordcuts, _ in self.cuts.items():
             interval = wordcuts.replace("["," ").replace("]"," ")
             interval = interval.split(",")
             u = int(float(interval[1]))
@@ -173,25 +150,6 @@ class Scheme:
             diffs.append(u - l)
         return diffs
     
-    """ def _discretize_int(self, data): #Borrar
-        discrete = []
-        inits, ends, alphs = self.extract_data()
-        discrete = []
-        for i in range(0,len(data)):
-            row_discr = []
-            row_discr.append(int(data[i,0]))
-            for j in range(0,len(inits)):
-                media = data[i,range(inits[j],ends[j])].mean()
-                for k in range(0,len(alphs[j])):
-                    if alphs[j][k][0] <= media < alphs[j][k][1]:
-                        row_discr.append(k+1)
-                if media >= alphs[j][len(alphs[j])-1][1]:
-                    row_discr.append(len(alphs[j]))
-                if media < alphs[j][0][0]:
-                    row_discr.append(1)
-            discrete.append(row_discr)
-        return np.array(discrete) """
-
     def discretize_int(self, data):
         inits, ends, alphs = self.extract_data()
         self.ds_discrete_ints = np.array([[transformation(data[r,inits[j-1]:ends[j-1]].mean(), alphs[j-1], j, int(data[r,0])) for j in range(0,len(inits)+1)] for r in range(0,len(data))])
@@ -200,48 +158,14 @@ class Scheme:
         self.discretize_int(self.ds.data)
         self.reconstruct()
         
-        #strings = []
-        #for i in range(0,len(self.ds_discrete_ints)):
-        #    string = ""
-        #    for j in range(1,len(self.ds_discrete_ints[i,:])):
-        #        string += conf.LETTERS[self.ds_discrete_ints[i,j]]
-        #    strings.append([self.ds_discrete_ints[i,0],string])
-        #self.ds_discrete_strings = np.array(strings)
         discrete2 = self.ds_discrete_ints.copy()
         discrete2[:,1:] += 64
         self.ds_discrete_strings = np.array([[discrete2[i,0], ''.join(map(chr,discrete2[i,1:].flatten()))] for i in range(len(discrete2))])
         self.confusion_matrix.create(self.ds_discrete_strings)
     
-    """ def _reconstruct(self): #Borrar
-        #self.ds_discrete_ints = np.array(self.ds_discrete_ints)
-        diffs = self.cutdiffs()
-        reconstructed = np.empty([len(self.ds.data), len(self.ds.data[0,:])])
-        for i in range(0,len(self.ds_discrete_ints)):
-            reconstructed_row = []
-            try:
-                reconstructed[i,0] = self.ds_discrete_ints[i,0]
-            except IndexError:
-                df = pd.DataFrame(self.ds_discrete_ints).T
-                df.to_excel(excel_writer = "/Users/scoramg/Dropbox/Escolaridad/Postdoctorado/python/errors.xlsx")
-                print(len(self.ds_discrete_ints),len(self.ds.ds_discrete_ints[0,:]))
-            for j in range(1,len(self.ds_discrete_ints[i,:])):
-                reconstructed_row = reconstructed_row + list(itertools.repeat(self.ds_discrete_ints[i,j], diffs[j-1]))
-            if len(reconstructed[i,1:]) != len(np.array(reconstructed_row)):
-                print("i",i)
-                print("len(reconstructed[i,1:]):", len(reconstructed[i,1:]), "len(np.array(reconstructed_row)):", len(np.array(reconstructed_row)))
-            np.copyto(reconstructed[i,1:],np.array(reconstructed_row))  
-        
-        self.ds_discrete_reconstructed = normalize_matrix(reconstructed)   """
-    
     def reconstruct(self):
-        #self.ds_discrete_ints = np.array(self.ds_discrete_ints)
         diffs = self.cutdiffs()
-        #i=0
-        #j=0
-        #print(self.ds_discrete_ints, diffs[0])
-        #print(list(itertools.chain.from_iterable(itertools.repeat(self.ds_discrete_ints[j,i], diffs[i]))))
-        
-        diffs.insert(0,1) # Inserta al inicio de las diferencias un 1, para que se repita 1 vez la clase
+        diffs.insert(0,1) 
         stats = [[self.ds_discrete_ints[j,1:].min(), self.ds_discrete_ints[j,1:].max()] for j in range(0,len(self.ds.data))]
         self.ds_discrete_reconstructed = np.array([list(itertools.chain.from_iterable(itertools.repeat(minmax_normalize_number(self.ds_discrete_ints[j,i], stats[j][1], stats[j][0], i), diffs[i]) for i in range(0, len(diffs)))) for j in range(0,len(self.ds.data))])
         
@@ -264,7 +188,7 @@ class Scheme:
         mycopy.isEvaluatedSurrogate = self.isEvaluatedSurrogate
         return mycopy
     
-    def evaluate(self, model=None): #Modificar a CIAPP
+    def evaluate(self, model=None):
         no_eval = 0
         if not model:
             self.fitness_functions.values = []
@@ -299,7 +223,6 @@ class Scheme:
             alph_inits = []
             for interval in alph:
                 alph_inits.append(interval[0])
-            #print("before:",alph_inits)
             alphs_mut = set()
             alphs_mut.add(alph_inits[0])
             for i in range(1, len(alph_inits)):
@@ -307,7 +230,6 @@ class Scheme:
                     alphs_mut.add(random.uniform(self.ds.limites[0], self.ds.limites[1]))
                 else:
                     alphs_mut.add(alph_inits[i])
-            #print("after:", sorted(list(alphs_mut)))
             new_alphs.append(to_paired_value(sorted(list(alphs_mut.union({self.ds.limites[0], self.ds.limites[1]+1})))))
         return new_alphs
     
@@ -334,35 +256,19 @@ class Scheme:
     def crossover(self, parent):
         inits1, _, alphs1 = self.extract_data()
         parent1 = {inits1[i]: alphs1[i] for i in range(0,len(inits1))}
-        
         inits2, _, alphs2 = parent.extract_data()
         parent2 = {inits2[i]: alphs2[i] for i in range(0,len(inits2))}
-
         cut1 = random.randint(1,len(parent1))
         cut2 = random.randint(1,len(parent2))
-        # print(cut1, cut2)
-
+ 
         off1_items = collections.OrderedDict(sorted(list(parent1.items())[:cut1] + list(parent2.items())[cut2:]))
         off2_items = collections.OrderedDict(sorted(list(parent2.items())[:cut2] + list(parent1.items())[cut1:]))
-        
-        #if 1 not in list(off1_items.keys()):
-        #    print("Aqui")
-        
-        #if 1 not in list(off2_items.keys()):
-        #    print("Aqui")
         
         new_cuts1 = to_paired_value(sorted(list(set(off1_items.keys()).union({self.ds.dimensions[1]-1}))))
         new_alphs1 = list(off1_items.values())
         new_cuts2 = to_paired_value(sorted(list(set(off2_items.keys()).union({parent.ds.dimensions[1]-1}))))
         new_alphs2 = list(off2_items.values())
         
-        ''' if len(list(off1_items.keys())) == 1:
-            print("Aquí: ",list(off1_items.keys()), ", cut1: ", cut1, ", cut2: ", cut2, ", parent1: ", parent1, ", parent2: ", parent2)
-            print("len(new_cuts1): ", len(new_cuts1), ", new_cuts1", new_cuts1, ", len(new_cuts2): ", len(new_cuts2), ", new_cuts2:", new_cuts2)
-        
-        if len(list(off2_items.keys())) == 1:
-            print("Aquí: ",list(off2_items.keys()), ", cut1: ", cut1, ", cut2: ", cut2, ", parent1: ", parent1, ", parent2: ", parent2)
-            print("len(new_cuts1): ", len(new_cuts1), ", new_cuts1", new_cuts1, ", len(new_cuts2): ", len(new_cuts2), ", new_cuts2:", new_cuts2) '''
         
         if (len(new_cuts1) >= conf.MIN_NUMBER_OF_WORD_CUTS) and (len(new_cuts2) >= conf.MIN_NUMBER_OF_WORD_CUTS):
             off1_cuts = {}
@@ -402,11 +308,11 @@ class Scheme:
             dominance = False
 
         if dominate1 == 1:
-            dominance = True #f1 dominates f2
+            dominance = True 
             
         if dominate2 == 1:
             dominance = False
-        #dominance = np.all(self.fitness_functions.values<=compared.fitness_functions.values) and np.any(self.fitness_functions.values<compared.fitness_functions.values)
+        
         return dominance
     
     def matlab_format(self):
@@ -426,38 +332,23 @@ class Scheme:
         return mat_array, self.fitness_functions.values, self.surrogate_values, self.isEvaluatedOriginal, self.isEvaluatedSurrogate
     
     def to_vector(self, id_model):
-        #print("repr_type: ",repr_type)
-        if self.options.model[id_model].train_rep == "all": #Todo el esquema como un vector
+        if self.options.model[id_model].train_rep == "all": 
             return self._to_vector_all(normalized=False)
-        elif self.options.model[id_model].train_rep == "allnorm": #Todo el esquema como un vector
+        elif self.options.model[id_model].train_rep == "allnorm": 
             return self._to_vector_all(normalized=True)
-        elif self.options.model[id_model].train_rep == "numcuts": #El esquema representado por conteos de cortes
+        elif self.options.model[id_model].train_rep == "numcuts": 
             return self._to_vector_countcode()
-        elif self.options.model[id_model].train_rep == "stats": #El esquema representado como estadísticas descriptiva
+        elif self.options.model[id_model].train_rep == "stats": 
             return self._to_stats_vector()
-        elif self.options.model[id_model].train_rep == "cutdits": #El esquema representado por como están distribuidos los cortes
+        elif self.options.model[id_model].train_rep == "cutdits": 
             return self._to_cutdistr_vector()
-        ''' El esquema representado como: 
-                no_cortes_palabras, 
-                media_cortes_palabras, 
-                mediana_cortes_palabras, 
-                min_cortes_palabras
-                max_cortes_palabras
-                std_cortes_palabras
-                media_alfabetos, 
-                mediana_alfabetos, 
-                min_alfabetos
-                max_alfabetos
-                std_alfabetos'''
         
     def _to_vector_all(self, normalized=False):
         lista = []
         _, ends, alphs = self.extract_data()
         for i in range(len(ends)):
-            #lista.append(ends[i])
             lista.append(minmax_normalize_number(ends[i],minimum=1, maximum=self.ds.dimensions[1],ind=-1) if normalized else ends[i])
             for j in range(1,len(alphs[i])):
-                #lista.append(alphs[i][j][0])
                 lista.append(minmax_normalize_number(alphs[i][j][0],minimum=self.ds.limites[0], maximum=self.ds.limites[1],ind=-1) if normalized else alphs[i][j][0])
         return lista, np.array(self.fitness_functions.values)
     
@@ -487,7 +378,6 @@ class Scheme:
         else:
             time_cuts_coded = len(norm_time_cuts)-1 + (norm_time_cuts[-1] - mean(norm_time_cuts[1:len(norm_time_cuts)-1]))
         
-        #time_cuts_coded = len(norm_time_cuts)-1 + (norm_time_cuts[-1] - mean(norm_time_cuts[1:len(norm_time_cuts)-1]))
         return [time_cuts_coded, *alphs_coded], self.fitness_functions.values
     
     def classify(self, UsingTest, set_type, UsingDiscrete):
@@ -565,7 +455,6 @@ class Scheme:
         stats, headers = self.classifier.metrics2matriz()
             
         DF = pd.DataFrame(stats)
-        #print(DF)
         DF.to_csv(directory+"/"+FileName+".csv", header=headers)
     
     def is_contained_in_list(self, list_schemes):
@@ -578,30 +467,8 @@ class Scheme:
     def prediction_measures(self, id_model):
         obs = []
         pred = []
-        #print("Scheme.prediction_measure.fitness_functions.values[{id_model}]:".format(id_model=id_model), self.fitness_functions.values[id_model])
-        #print("Scheme.prediction_measure.surrogate_values[{id_model}]:".format(id_model=id_model), self.surrogate_values[id_model])
         obs.append(self.fitness_functions.values[id_model])
         pred.append(self.surrogate_values[id_model])
         measure = RegressionMeasures(observed=obs, predicted=pred)
-        #try:
         value = eval("measure."+self.options.evaluation_measure)()
-        #except ValueError:
-        #    value = 0
         return value
-        
-    '''public void ExportErrorRates(DataSet ds, String folder, String Location, String type_selection) {
-        String FileName = "ErrorRates_"+type_selection;
-        
-        String directory = System.getProperty("user.dir")+"/Results"+Location+'/'+folder+'/'+ds.getName();
-        
-        File FileDir = new File(directory);
-        if(!FileDir.exists()) FileDir.mkdirs();
-
-        try(  PrintWriter out = new PrintWriter( directory+"/"+FileName+".csv" )  ){
-            for(double d: this.csf.eval.getErrorRatesByFolds()){
-               out.println(d);
-            }
-        } catch (FileNotFoundException ex) {
-            java.util.logging.Logger.getLogger(MOScheme.class.getName()).log(Level.SEVERE, null, ex);
-        }       
-    }'''

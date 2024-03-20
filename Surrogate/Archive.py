@@ -36,7 +36,6 @@ class Archive:
     def create_checkpoint(self):
         individuals_cuts = []
         for i in range(0,self.size):
-            #print("Archive.create_checkpoint.data[i][0]:", self.data[i].cuts)
             individuals_cuts.append(self.data[i].cuts.copy())
         return individuals_cuts
     
@@ -47,7 +46,6 @@ class Archive:
         isEvaluatedOriginal = []
         isEvaluatedSurrogate = []
         for i in range(0,self.size):
-            #print("Archive.export_matlab.data[i]:",self.data[i])
             cuts, fits, surrs, isOriginal, isSurrogate = self.data[i].matlab_format()
             data["FrontIndividual"+str(i)] = cuts
             surrogates.append(surrs)

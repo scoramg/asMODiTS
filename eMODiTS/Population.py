@@ -15,13 +15,8 @@ class Population:
         self.__dict__.update(kwargs)
         
         self.individuals = []
-        #self._ds = ds
-        #self.size = 0
-        #self.options = options
         if hasattr(self,"pop_size"):
             self.create(pop_size=self.pop_size)
-        #if pop_size > 0:
-        #    self.create(pop_size=pop_size)
             
     @property
     def size(self):
@@ -39,13 +34,11 @@ class Population:
         del(self.individuals)
         if hasattr(self,"_ds"):
             del(self._ds)
-        #gc.collect()
-    
+        
     def __str__(self):
         s = ""
         for i in range(0,len(self.individuals)):
             s = s + str(self.individuals[i].cuts)+" \n"+str(self.individuals[i].fitness_functions.values)+"\n";
-            #s += str(self.individuals[i].fitness_functions.values)+"\n"
         return s
     
     def setIndividuals(self, individuals):
@@ -59,62 +52,33 @@ class Population:
                     
     def add_individual(self, scheme):
         self.individuals.append(scheme.copy())
-        #self.size += 1
         
     def create(self, pop_size):
         for i in range(0,pop_size):
             self.add_individual(sch.Scheme(ds=self.ds, options=self.options))
             
-    def evaluate(self, surrogate_models=None): #Revisar con CIAPP
+    def evaluate(self, surrogate_models=None): 
         no_eval = 0
         if not surrogate_models:
             for i in range(0,self.size):
                 no_eval += self.individuals[i].evaluate()
                 self.individuals[i].isEvaluatedOriginal = True
-        else: #self.options.eval_method == 'surrogate':
-            
-            #idxs = []
-            #matrix_distances = []
-            #normalized_matrix_distance = []
-            
-            #print("Population.evaluation.surrogate_models.is_same_model: ", surrogate_models.is_same_model)
-            
-            """ if surrogate_models.is_same_model:
-                if self.options.model[0].dist_metric == 'dtw' and self.options.model[0].name in ['KNN','RBF']:
-                    #print("Population.evaluation")
-                    dtw = DTW(exec_type=self.options.exec_type, options=self.options.model[0])
-                    matrix_distances = dtw.distance(train, surrogate_models.models[0].xtrain)
-                if self.options.model[0].dist_metric == 'gak' and self.options.model[0].name == 'RBF':
-                    gak = GAK(n_jobs=-1)
-                    matrix_distances = gak.distance(train, surrogate_models.models[0].xtrain)
-                if self.options.model[0].dist_metric == 'tga' and self.options.model[0].name == 'RBF':
-                    tga = TGA(options=self.options.model[0])
-                    matrix_distances = tga.distance(train, surrogate_models.models[0].xtrain)
-                if self.options.model[0].dist_metric == 'gak' and self.options.model[0].name == 'SVR':
-                    normalized_matrix_distance, matrix_distances = surrogate_models.models[0].preprocess_sklearn(train, fit_time=False)     """
-                
+        else:   
             surrs = numpy.empty([self.size, surrogate_models.no_models], dtype=float)
             surrs[:] = numpy.nan
             for i in range(0, surrogate_models.no_models):
                 train, _ = self.to_train_set(i)
                 y_pred = surrogate_models.models[i].predict(train)
-                #print('y_pred: ', y_pred)
                 surrs[:,i] = y_pred
-            #print('surrs',surrs)
             for j in range(0, self.size):
                 if numpy.all(numpy.isnan(surrs[j,:])):
                     print("Population.evaluation: Entro")
                 self.individuals[j].surrogate_values = surrs[j,:].tolist()
-                #print('self.individuals[j].surrogate_values: ',self.individuals[j].surrogate_values)
-                #print("self.individuals[j].fitness_functions.values: ", self.individuals[j].fitness_functions.values) 
                 self.individuals[j].fitness_functions.values = surrs[j,:].tolist()
                 self.individuals[j].isEvaluatedSurrogate = True
             for i in range(0,surrogate_models.no_models):
-                #try:
                 eval("surrogate_models.models[i].insert_"+self.options.model[i].ue)(individuals=self.individuals)
-                #except (NameError, AttributeError):
-                #    pass
-        
+            
         return no_eval
     
     def crossover(self):
@@ -170,23 +134,18 @@ class Population:
         for i in list(victories.keys())[:self.size]:
             parents.add_individual(self.individuals[i])
         del(victories)
-        #gc.collect()
         return parents
     
     def to_train_set(self, id_model):
         train = []
         ff = []
         for i in range(0,self.size):
-            #print("Population.to_train_set.individuals.values:",i,self.individuals[i].fitness_functions.values)
             data, ff_values = self.individuals[i].to_vector(id_model)
-            #train.append(numpy.array(data))
             train.append(data)
             ff.append(ff_values)
-        #return numpy.array(train,dtype=object), numpy.array(ff)
         
         return numpy.array(train, dtype=object), numpy.array(ff)
-        #return numpy.array(train, dtype=numpy.float64), numpy.array(ff)
-    
+        
     def export_matlab(self, isAccumulated = True):
         data = {}
         fitness = []
@@ -234,18 +193,9 @@ class Population:
     
     def cohesion_by_words(self):
         dic = self.cuts_probabilities()
-        #mvalue = max(dic.values())
         mvalue = len(dic.keys())
-        #max_keys = [key for key, value in dic.items() if value == mvalue]
-        #print(dic, mvalue, max_keys)
         return mvalue
-        #suma = 0
-        #for i  in range(0,len(self.individuals)):
-            #for j in range(0,len(self.individuals)):
-            #    data1, ff_values1 = self.individuals[i].to_vector(filled=False)
-            #    data2, ff_values2 = self.individuals[j].to_vector(filled=False)
-            #    suma += distance_fast(numpy.array(data1),  numpy.array(data2), use_pruning=True)
-        #return suma/len(self.individuals)
+        
         
     def fitness_values(self): # 0: eMODiTS, 1: eMODiTS Surrogated
         data = {}
@@ -253,7 +203,6 @@ class Population:
         data['surrogate'] = []
         data['inserted'] = 0
         for ind in self.individuals:
-            #print("Population.fitness_values ind.isEvaluatedOriginal:",ind.isEvaluatedOriginal, "Population.fitness_values ind.isEvaluatedSurrogate:", ind.isEvaluatedSurrogate, "Population.fitness_values ind.is_prediction_measurable:", ind.is_prediction_measurable)
             if ind.is_prediction_measurable:
                 data['original'].append(ind.fitness_functions.values.copy())
                 data['surrogate'].append(ind.surrogate_values.copy())
@@ -263,12 +212,9 @@ class Population:
         return data
             
     def prediction_power(self, surrogate_models):
-        assert self.options.eval_method == 'surrogate', "Prediction power function works in surrogate models version"
         fitness = self.fitness_values()
         obs = fitness['original']
         surr = fitness['surrogate']
-        #print("Population.prediction_power.obs: ",obs)
-        #print("Population.prediction_power.surr: ",surr)
         data = {}
         
         for i in range(0,surrogate_models.no_models):
@@ -276,8 +222,6 @@ class Population:
                 try:
                     measures = RegressionMeasures(observed=obs[:,i], predicted=surr[:,i])
                 except IndexError:
-                    #print("Population.prediction_power - Obs", obs)
-                    #print("Population.prediction_power - Surr", surr)
                     exit(1)
             else:
                 measures = RegressionMeasures()
@@ -292,13 +236,11 @@ class Population:
             name = "FrontIndividual"+str(i)
             individual = sch.Scheme(ds=self.ds, options=self.options)
             individual.reset()
-            #print("dataset: ", self.ds.name)
             individual.load_from_lists(cuts=data[name], ff=fitness[i], surr=surrogates[i])
             self.add_individual(individual)
             
     def get_individuals_cuts(self):
         individuals_cuts = []
-        #print("get_individuals_cuts.size", self.size)
         for i in range(0,self.size):
             ind = {}
             ind["IndividualCuts"] = self.individuals[i].cuts.copy()
@@ -310,7 +252,6 @@ class Population:
         return individuals_cuts
     
     def restore(self, individuals_cuts):
-        #print("restore.individuals_cuts", len(individuals_cuts))
         for i in range(0,len(individuals_cuts)):
             ind = sch.Scheme(ds=self.ds, cuts=individuals_cuts[i]["IndividualCuts"], options=self.options)
             ind.fitness_functions.values = individuals_cuts[i]["FitnessValues"]

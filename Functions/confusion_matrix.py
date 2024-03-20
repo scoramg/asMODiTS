@@ -1,5 +1,4 @@
 import numpy as np
-import gc
 from Utils.utils import init_dictionary
 
 class ConfusionMatrix:
@@ -20,8 +19,7 @@ class ConfusionMatrix:
         del(self.row_total)
         del(self.bd)
         del(self.clases)
-        #gc.collect()
-    
+        
     def copy(self):
         mycopy = ConfusionMatrix(self.bd)
         mycopy.matrix = self.matrix.copy()
@@ -47,16 +45,13 @@ class ConfusionMatrix:
                 class_sum += int(value)
             self.row_total[string] = class_sum
         del(ds_strings_unique)
-        #gc.collect()
-    
+        
     def create(self, str_discrete):  
         unique_class, counts_class = np.unique(str_discrete[:,0], return_counts=True)
         self.class_total = dict(zip(unique_class, counts_class))
-        #print(self.class_total)
         unique_str, counts_str = np.unique(str_discrete[:,1], return_counts=True)
         self.row_total = dict(zip(unique_str, counts_str))
-        #print(self.row_total)
-
+        
         dict_clases = dict(zip(list(map(str, self.clases)),[0] * len(self.clases)))
         list_dict_clases = list(dict_clases.copy() for x in self.row_total.keys())
         self.matrix = dict(zip(self.row_total.keys(),list_dict_clases))

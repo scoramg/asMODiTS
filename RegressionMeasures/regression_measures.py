@@ -12,20 +12,10 @@ class RegressionMeasures:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
         self.values = RegressionMeasures.init_measures_values()
-        #properties: observed, predicted
         if not hasattr(self,"observed"):
             self.observed = np.array([],dtype=float)
         if not hasattr(self,"predicted"):
             self.predicted = np.array([],dtype=float)
-            
-        # if hasattr(self,"observed") is not None:
-        #     self.observed = np.array(observed.copy(),dtype=float)
-        # else:
-        #     self.observed = np.array([],dtype=float)
-        # if predicted is not None:
-        #     self.predicted = np.array(predicted.copy(),dtype=float)
-        # else:
-        #     self.predicted= np.array([],dtype=float)
         
     def setObserved(self, observed):
         self.observed = np.array(observed.copy(),dtype=float)
@@ -73,8 +63,6 @@ class RegressionMeasures:
         return isEmpty
     
     def MSE(self):
-        #print("regression_measures.MSE.observed:",self.observed)
-        #print("regression_measures.MSE.predicted:",self.predicted)
         self._clear_data()
         if self._is_empty_obs or self._is_empty_pred:
             self.values['MSE'] = np.NZERO
@@ -120,11 +108,9 @@ class RegressionMeasures:
             self.values['R2'] = round(1 - (sum_num/sum_den),4)
         except ZeroDivisionError:
             self.values['R2'] = np.NZERO
-            #print("R2.len(self.observed): ",len(self.observed))
-            #exit(1)
         return self.values['R2']
         
-    def MD(self, j=1): # modified index of agreement (0-1), 0 -> A value of 1 indicates a perfect match, and 0 indicates no agreement at all
+    def MD(self, j=1): 
         observed_mean = np.mean(self.observed)
         sum_num = 0
         sum_den = 0
@@ -134,14 +120,9 @@ class RegressionMeasures:
             den = abs(self.predicted[i] - observed_mean) + (abs(self.observed[i] - observed_mean)**j)
             sum_den += den
         try:
-            #print("regression_measures.MD.sum_num:",sum_num)
-            #print("regression_measures.MD.sum_den:",sum_den)
             self.values['MD'] = round(1 - (sum_num/sum_den),4)
         except ZeroDivisionError:
             self.values['MD'] = np.NZERO
-            #print("MD.len(self.observed): ",len(self.observed))
-            #print("MD.len(self.predicted): ",len(self.predicted))
-            #exit(1)
         return self.values['MD']
     
     def MAPE(self):

@@ -22,7 +22,7 @@ from Surrogate.KNN import Parameters as KNNParams
 from Surrogate.RBF import Parameters as RBFParams
 from Surrogate.SVR import Parameters as SVRParams
 from Surrogate.RBFNN import Parameters as RBFNNParams
-from Utils.parser import eMODiTSParameters
+from Utils.parser import asMODiTSParameters
 from Functions.fitness_functions import FitnessFunction
 from RegressionMeasures.regression_measures import RegressionMeasures
 
@@ -45,7 +45,7 @@ if platform.system() == 'Windows':
     nsga.FastNonDominatedSort()
     return nsga.fronts[0] """
     
-class eMODiTSOptimizer:
+class asMODiTSOptimizer:
     def __init__(self):
         self.knn_opt = KNNOptim()
         self.svr_opt = SVROptim()
@@ -107,61 +107,8 @@ class eMODiTSOptimizer:
         }
         return space
 
-class eMODiTS: #Falta actualizar
-    def __init__(self, options=None):
-        self.options = options
-        self.no_evaluations = 0
-        self.export_filename = "e"+str(self.options.e)+"p"+str(self.options.ps)+"g"+str(self.options.g)
-        #self.pm = pm
-        #self.pc = pc
-        #self.NG = NG
-        #self.pop_size = pop_size
-        #self.NE = NE
-        #self.idfunctionsconf = idfunctionsconf
 
-    def execute(self, iDS):
-        __slash__ = '/'
-        if platform.system() == 'Windows':
-            __slash__ = '\\'
-        ds = Dataset(iDS, '_TRAIN', False)
-        AccumulatedFront = NSGA2(_ds=ds, _options=self.options)
-        results_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))+__slash__+"Results"+__slash__
-        if not os.path.isdir(results_dir):
-            os.makedirs(results_dir)
-
-        start_time = time.time()
-
-        #pr = cProfile.Profile()
-        #pr.enable()
-
-        for e in range(0,self.options.e):
-            nsga2 = NSGA2(_ds=ds, _options=self.options)
-            nsga2.execute(e+1)
-            self.no_evaluations += nsga2.no_evaluations
-            for f in nsga2.fronts[0]:
-                AccumulatedFront.population.add_individual(f)
-
-        AccumulatedFront.FastNonDominatedSort()
-        mat = AccumulatedFront.get_first_front_as_population().export_matlab()
-        mat["time"] = int(time.time() - start_time) * 1000 #Milisegundos
-        mat["evaluations"] = self.no_evaluations
-        savemat(results_dir+__slash__+ds.name+"_MODiTS.mat", mat, long_field_names=True)
-        
-        """ pr.disable()
-        s = io.StringIO()
-        sortby = SortKey.CUMULATIVE
-        
-        profiler_folder = results_dir+'/profiler/'+time.strftime("%Y-%m-%d-%H-%M-%S") + '/'
-        if not os.path.isdir(profiler_folder):
-            Path(profiler_folder).mkdir(parents=True, exist_ok=True)
-        
-        ExportProfileToFile = profiler_folder + "ProfilerResults_"+ds.name+".txt"
-        
-        with open(ExportProfileToFile, 'w') as stream:
-            stats = pstats.Stats(pr, stream=stream).sort_stats(sortby)
-            stats.print_stats() """
-
-class sMODiTS:
+class asMODiTS:
     def __init__(self, options=None):
         self.options = options
         self.no_evaluations = 0
@@ -326,18 +273,16 @@ if __name__ == "__main__":
         SVRParams,
         RBFNNParams
     ]
-    parser = eMODiTSParameters(commands=commands)
+    parser = asMODiTSParameters(commands=commands)
     options=parser.parse_args()
     
     #Falta comparar los argumentos para hacer que no se repita o empiece desde un valor si cambia un parametro que no esta en el nombre del archivo
     #print("emodits.main.options:", options)
     ids = options.ids
     
-    if options.eval_method == 'surrogate':
-        assert len(options.model) == FitnessFunction(idconfiguration=options.ff).no_functions, "The surrogate models' number ({}) is less than or greater than the objective functions' number({}).".format(len(options.model),FitnessFunction(idconfiguration=options.ff).no_functions)
-        method = sMODiTS(options=options)
-    else:
-        method = eMODiTS(options=options)
+    assert len(options.model) == FitnessFunction(idconfiguration=options.ff).no_functions, "The surrogate models' number ({}) is less than or greater than the objective functions' number({}).".format(len(options.model),FitnessFunction(idconfiguration=options.ff).no_functions)
+    method = asMODiTS(options=options)
+    
     workers = mp.cpu_count()
     chunksz = 1
     p = mp.Pool(workers)

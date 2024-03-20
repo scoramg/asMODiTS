@@ -1,37 +1,16 @@
-#from ML.KMeans import KMeans
-#from sklearn.cluster import KMeans
 import argparse
 from sklearn.metrics import mean_squared_error
-#from Utils.utils import get_distance
 import numpy as np
 
-#from tslearn.utils import to_time_series_dataset
 from Utils.timeseries import to_time_series_dataset
-#from LearnMethods.Clustering.kmeans import TimeSeriesKMeans
 from tslearn.clustering.kmeans import TimeSeriesKMeans
 
-#from Surrogate.ModelBase import ModelBase
 from Surrogate.ModelBase import ModelBase
 
 from Utils.parser import Parser
 import Settings as conf
-#from LearnMethods.ts_cluster import ts_kmeans
-#from smt.surrogate_models import RBF
-
-#from sklearn.metrics.pairwise import rbf_kernel
 from argparse import Namespace
 from hyperopt import hp
-
-"""Paginas de interes:
-https://gamedevacademy.org/using-neural-networks-for-regression-radial-basis-function-networks/
-https://github.com/raaaouf/RBF_neural_network_python/blob/master/RBF_neuralNetwork%20.py
-https://rbf.readthedocs.io/en/latest/
-https://towardsdatascience.com/most-effective-way-to-implement-radial-basis-function-neural-network-for-classification-problem-33c467803319
-
-https://tslearn.readthedocs.io/en/stable/variablelength.html
-
-Debug en consola: https://code.visualstudio.com/docs/python/debugging#:~:text=If%20you're%20only%20interested,Debug%20Python%20File%20in%20Terminal.
-"""
 
 class Optimizer:
     def __init__(self):
@@ -79,7 +58,6 @@ class Parameters(Parser):
         self.add_argument("--gu", type=int, help="The generations' number for evaluating the entire population in the original models (generation strategy). Type of data: integer. Required argument. Default value = %(default)s",default=5)
         self.add_argument("--train-rep", type=str, help="Representation type used for the surrogate model train set. 'all' = A Vector with all values, 'allnorm' = A normalized vector with all values, 'numcuts' = Vector with only number of cuts, 'stats' = Vector with stats values, 'cutdits' = Vector with cut distributions. Type of data: string. Default value = %(default)s",default="all")
         self.add_argument("--dist-metric", type=str, choices=RBFNN.distances_allowed,help="List of distance metric: {dists}. Type of data: string. Default value = %(default)s".format(dists=RBFNN.distances_allowed),default=RBFNN.distances_allowed[0])
-        #self.add_argument("--dtw-dist", type=str, choices=['square', 'absolute','precomputed'], help="Distance used by DTW for chech similarity among subsequences: 'square' (default), 'absolute', 'precomputed' or callable. Type of data: string. Default value = %(default)s",default='square')
         self.add_argument("--dtw-sakoechiba-w", type=float, help="Window size rate for sakoechiba dtw constraint. Type of data: double. Default value = %(default)s", default=0.1)        
         self.add_argument("--rbfnn-func", choices=['multiquadratic', 'inverse_multiquadratic','absolute','gaussian','linear','cubic','thin_plate'], type=str, help="Possible Radial Basis Functions to use in the surrogate model: 'multiquadratic', 'inverse_multiquadratic', 'absolute', 'gaussian', 'linear', 'cubic', 'thin_plate'. Type of data: string. Default value = %(default)s", default='gaussian')
         self.add_argument("--rbfnn-epsilon", type=float, help="RBF epsilon: 0: compute from std of data. Type of data: float. Default value = %(default)s", default=0)
@@ -101,7 +79,6 @@ class RBFNN(ModelBase):
         self.w = np.random.randn(self.options.model[self.id_model].rbfnn_k)
         self.b = np.random.randn(1)
         self.kmeans = TimeSeriesKMeans(n_clusters=self.options.model[self.id_model].rbfnn_k, metric=self.options.model[self.id_model].dist_metric)
-        #self.kmeans = TimeSeriesKMeans(n_clusters=self.options.model[self.id_model].rbfnn_k, metric=self.options.model[self.id_model].dist_metric, options=self.options, metric_params=self.options.model[self.id_model], init="k-means++", n_init=1, random_state=None, verbose=0, n_jobs=None, max_iter=50, dtw_inertia=False)
         self.centers = []
         
     def get_name(self):
@@ -112,7 +89,7 @@ class RBFNN(ModelBase):
         kernel_value = np.exp(-gamma * distance ** 2)
         return kernel_value
         
-    def rbf(self, x, c, gamma=1.0): #x: value, c: centers, gamma: standard deviation 
+    def rbf(self, x, c, gamma=1.0):
         # Compute DTW distance
         return eval("self."+self.options.model[self.id_model].rbfnn_func)(x,c,gamma)
         
@@ -174,60 +151,3 @@ class RBFNN(ModelBase):
         data["training_number"] = self.training_number
         data["archive"] = self.archive.export_matlab()
         return data
-    
-""" from utils import kmeans, get_distance
-
-import numpy as np
-
-#from sklearn.cluster import KMeans
-
-class RBF:
-    
-    def __init__(self, X, y, tX, ty, num_of_classes,
-                 k, std_from_clusters=True):
-        self.X = X
-        self.y = y
-
-        self.tX = tX
-        self.ty = ty
-
-        self.number_of_classes = num_of_classes
-        self.k = k
-        self.std_from_clusters = std_from_clusters
-
-    def convert_to_one_hot(self, x, num_of_classes):
-        arr = np.zeros((len(x), num_of_classes))
-        for i in range(len(x)):
-            c = int(x[i])
-            arr[i][c] = 1
-        return arr
-
-    def rbf(self, x, c, s):
-        distance = get_distance(x, c)
-        return 1 / np.exp(-distance / s ** 2)
-
-    def rbf_list(self, X, centroids, std_list):
-        RBF_list = []
-        for x in X:
-            RBF_list.append([self.rbf(x, c, s) for (c, s) in zip(centroids, std_list)])
-        return np.array(RBF_list)
-    
-    def fit(self):
-        self.centroids, self.std_list = kmeans(self.X, self.k, max_iters=1000)
-        #kmeans = KMeans(n_clusters=self.k, max_iter=1000, random_state=0).fit(self.X)
-        #self.centroids = kmeans.cluster_centers_
-        if not self.std_from_clusters:
-            dMax = np.max([get_distance(c1, c2) for c1 in self.centroids for c2 in self.centroids])
-            self.std_list = np.repeat(dMax / np.sqrt(2 * self.k), self.k)
-        RBF_X = self.rbf_list(self.X, self.centroids, self.std_list)
-        self.w = np.linalg.pinv(RBF_X.T @ RBF_X) @ RBF_X.T @ self.convert_to_one_hot(self.y, self.number_of_classes)
-        RBF_list_tst = self.rbf_list(self.tX, self.centroids, self.std_list)
-        self.pred_ty = RBF_list_tst @ self.w
-        self.pred_ty = np.array([np.argmax(x) for x in self.pred_ty])
-        diff = self.pred_ty - self.ty
-        print(diff, type(self.ty))
-        a = len(np.where(diff == 0)[0])
-        accuracy =  a / len(diff)
-        return accuracy
-        #print('Accuracy: ', len(np.where(diff == 0)[0]) / len(diff)) """
-        

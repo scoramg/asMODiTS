@@ -135,7 +135,6 @@ def ts_size(ts):
     """
     ts_ = to_time_series(ts)
     sz = ts_.shape[0]
-    #print(ts_[sz - 1][0])
     while sz > 0 and np.all(np.isnan(ts_[sz - 1][0])):
         sz -= 1
     return sz
@@ -175,7 +174,6 @@ def to_time_series(ts, remove_nans=False):
     --------
     to_time_series_dataset : Transforms a dataset of time series
     """
-    #print(ts[0])
     ts_out = np.array(ts[0], copy=True)
     if ts_out.ndim <= 1:
         ts_out = ts_out.reshape((-1, 1))
@@ -235,7 +233,6 @@ def to_time_series_dataset(dataset, dtype=float):
         return to_time_series_dataset(np.array(dataset))
     if len(dataset) == 0:
         return np.zeros((0, 0, 0))
-    #print(np.array(dataset))
     if np.array(dataset[0]).ndim == 0:
         dataset = [dataset]
     n_ts = len(dataset)
@@ -250,14 +247,8 @@ def to_time_series_dataset(dataset, dtype=float):
 
 def time_series_to_lists(timeseries):
     dataset_out = []
-    #print(type(timeseries))
     dataset_out = [ele.tolist() for ele in timeseries]
     return dataset_out
-    #n_ts = len(timeseries)
-    #dataset_out = []
-    #for i in range(n_ts):
-    #    dataset_out.append(timeseries[i])
-    #return np.array(dataset_out,ndmin=2)
 
 def check_equal_size(dataset):
     """Check if all time series in the dataset have the same size.
